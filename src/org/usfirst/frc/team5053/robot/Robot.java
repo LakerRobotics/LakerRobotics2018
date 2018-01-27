@@ -46,7 +46,7 @@ public class Robot extends IterativeRobot
 	private int allianceSide;
 	
 	// Diagnostic variables
-	private NetworkTable m_NetworkTable;
+	//private NetworkTable m_NetworkTable;
 	private double driveTrainDiagnosticPower;
 	private double[] diagnosticLeftRate;
 	private double[] diagnosticRightRate;
@@ -78,7 +78,7 @@ public class Robot extends IterativeRobot
     	server.startAutomaticCapture();
     	
     	// Diagnostic variable initialization
-    	m_NetworkTable =  NetworkTable.getTable("SmartDashboard");
+    	//m_NetworkTable =  NetworkTable.getTable("SmartDashboard");
     	driveTrainDiagnosticPower = 0;
     	diagnosticLeftRate = new double[202];
     	diagnosticRightRate = new double[202];
@@ -150,9 +150,9 @@ public class Robot extends IterativeRobot
             		diagnosticLeftRate[arrIndex] = m_DriveTrain.GetLeftSpeed();
             		diagnosticRightRate[arrIndex] = m_DriveTrain.GetRightSpeed();
             		
-            		m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
-        			m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
-        			m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
+            		//m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
+        			//m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
+        			//m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
         			
             		arrIndex++;
             		
@@ -161,9 +161,9 @@ public class Robot extends IterativeRobot
         		}
         		else
         		{
-        			m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
-        			m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
-        			m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
+        			//m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
+        			//m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
+        			//m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
         			
         			m_DriveTrain.arcadeDrive(0, 0);
         			driveTrainDiagnosticPower = 0;
@@ -181,9 +181,9 @@ public class Robot extends IterativeRobot
             		diagnosticLeftRate[arrIndex] = m_DriveTrain.GetLeftSpeed();
             		diagnosticRightRate[arrIndex] = m_DriveTrain.GetRightSpeed();
             		
-            		m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
-        			m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
-        			m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
+            		//m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
+        			//m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
+        			//m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
         			
             		arrIndex++;
             		
@@ -192,9 +192,9 @@ public class Robot extends IterativeRobot
         		}
         		else
         		{
-        			m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
-        			m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
-        			m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
+        			//m_NetworkTable.putNumberArray("diagnosticLeftRate", diagnosticLeftRate);
+        			//m_NetworkTable.putNumberArray("diagnosticRightRate", diagnosticRightRate);
+        			//m_NetworkTable.putNumberArray("diagnosticPower", diagnosticPowerSent);
         			
         			m_DriveTrain.arcadeDrive(0, 0);
         			driveTrainDiagnosticPower = 0;
@@ -430,7 +430,7 @@ public class Robot extends IterativeRobot
     }
     public void WriteDashboardData()
     {
-    	m_DriveTrain.WriteDashboardData();
-    	SmartDashboard.putNumber("lidar", m_Lidar.getDistanceFt());
+    	//m_DriveTrain.WriteDashboardData();
+    	//SmartDashboard.putNumber("lidar", m_Lidar.getDistanceFt());
     }
 }

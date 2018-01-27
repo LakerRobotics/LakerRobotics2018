@@ -33,8 +33,8 @@ public class RobotControllerMap
 		m_LeftDrive = new Talon(leftDrivePWM);
 		m_RightDrive = new Talon(rightDrivePWM);
 		
-		m_LeftDrive.setInverted(true);
-		m_RightDrive.setInverted(true);
+		//m_LeftDrive.setInverted(true);
+		//m_RightDrive.setInverted(true);
 	}
 	
 	public Talon getLeftDrive()

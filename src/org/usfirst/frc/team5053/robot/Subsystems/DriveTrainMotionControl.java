@@ -7,8 +7,8 @@ import org.usfirst.frc.team5053.robot.Subsystems.Utilities.MotionController;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.PIDSource;
-import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 /**
  * Drivetrain subsystem that extends the FRC RobotDrive class.
@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  *
  */
 
-public class DriveTrainMotionControl extends RobotDrive implements Subsystem
+public class DriveTrainMotionControl extends DifferentialDrive implements Subsystem
 {
 	/**
 	 * Hello There! : I'm the base constructor.
@@ -151,15 +151,16 @@ public class DriveTrainMotionControl extends RobotDrive implements Subsystem
 		// TODO Auto-generated method stub
 		
 	}
+	
 	public void WriteDashboardData() 
 	{
-		SmartDashboard.putNumber("Gyro Angle", m_Gyro.getAngle());
+		/*SmartDashboard.putNumber("Gyro Angle", m_Gyro.getAngle());
 		SmartDashboard.putNumber("Gyro Rate", m_Gyro.getRate());
 		SmartDashboard.putNumber("LeftDriveEncoder Rate", m_LeftEncoder.getRate());
 		
 		// Do not change these names they are used for the DS Dashboard
 		SmartDashboard.putNumber("leftDriveEncoder", m_LeftEncoder.getDistance());
-		SmartDashboard.putNumber("rightDriveEncoder", m_RightEncoder.getDistance());
+		SmartDashboard.putNumber("rightDriveEncoder", m_RightEncoder.getDistance());*/
 	}
 
 }
