@@ -120,19 +120,19 @@ public class MotionControlHelper {
        double percentRampDown = Math.abs(gapEnd)/m_rampUpRampDownDistance;
        if (Math.abs(percentRampDown)>1)  percentRampDown = 1; // limit percent to 100%
 
-      //Apply any speed reductions based on rampUp or rampDown.
-//       System.out.println("fromStart="+gapStart+"("+percentRampUp+")   fromEnd="+gapEnd+"("+percentRampDown+")");
-// Removed this 4/12/2016 seemed to cause problem, if close the end, the start dead overide would kick in and make it overshoot the target       
-//       if(Math.abs(gapStart)<Math.abs(gapEnd)){
-//    	   targetSpeed = percentRampUp * targetSpeed;
-//       }
-//       else{
+       //Apply any speed reductions based on rampUp or rampDown.
+       //System.out.println("fromStart="+gapStart+"("+percentRampUp+")   fromEnd="+gapEnd+"("+percentRampDown+")");
+       // Removed this 4/12/2016 seemed to cause problem, if close the end, the start dead overide would kick in and make it overshoot the target       
+       //if(Math.abs(gapStart)<Math.abs(gapEnd)){
+       //targetSpeed = percentRampUp * targetSpeed;
+       //}
+       //else{
        // If we are near the end, then ramp down
        if(Math.abs(gapEnd) < m_rampUpRampDownDistance) 
        {
     	   targetSpeed = percentRampDown * targetSpeed;
        }
-      // System.out.println("targetSpeed="+targetSpeed);
+       // System.out.println("targetSpeed="+targetSpeed);
        SmartDashboard.putNumber("targetSpeed",targetSpeed);
        
        SmartDashboard.putNumber("getTargetSpeed MotionControlHelper", targetSpeed);

@@ -31,7 +31,7 @@ public class RobotSensorMap
 	
 	private Encoder m_LeftDrive;
 	private Encoder m_RightDrive;
-//	private Encoder m_Shooter; if using talon then encoder does not talk to RoboRio so dont define it here, gets configured and defined in TalonSRX motor controller
+	//private Encoder m_Shooter; if using talon then encoder does not talk to RoboRio so dont define it here, gets configured and defined in TalonSRX motor controller
 	
 	private ADXRS450_Gyro m_Gyro;
 	
@@ -39,11 +39,11 @@ public class RobotSensorMap
 	public RobotSensorMap()
 	{
 		m_LeftDrive = new Encoder(leftDriveEncoderADIO, leftDriveEncoderBDIO);
-		m_LeftDrive.setReverseDirection(true);
+		m_LeftDrive.setDistancePerPulse(6*Math.PI/360); //Distance in inches
+		
 		m_RightDrive = new Encoder(rightDriveEncoderADIO, rightDriveEncoderBDIO);
-
-		m_LeftDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
-		m_RightDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
+		m_RightDrive.setDistancePerPulse(6*Math.PI/360); //Distance in inches
+		m_LeftDrive.setReverseDirection(true);
 
 		m_Gyro = new ADXRS450_Gyro();
 	}

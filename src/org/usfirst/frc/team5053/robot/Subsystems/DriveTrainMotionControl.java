@@ -7,7 +7,7 @@ import org.usfirst.frc.team5053.robot.Subsystems.Utilities.MotionController;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.PIDSource;
-import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 /**
@@ -32,9 +32,9 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	public boolean isPIDRunning = false;
 	
 	
-	public DriveTrainMotionControl(SpeedController leftMotor, SpeedController rightMotor, Encoder leftEncoder, Encoder rightEncoder, ADXRS450_Gyro Gyro)
+	public DriveTrainMotionControl(SpeedControllerGroup leftMotorGroup, SpeedControllerGroup rightMotorGroup, Encoder leftEncoder, Encoder rightEncoder, ADXRS450_Gyro Gyro)
 	{
-		super(leftMotor, rightMotor);
+		super(leftMotorGroup, rightMotorGroup);
 		
 		
 		m_LeftEncoder = leftEncoder;
@@ -42,7 +42,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_Gyro = Gyro;
 		
-		m_MotionController = new MotionController(this, (PIDSource) m_LeftEncoder, (PIDSource) m_Gyro);
+		m_MotionController = new MotionController(this, (PIDSource) m_RightEncoder, (PIDSource) m_Gyro);
 		
 	}
 	public void DriveDistance(double distance, double maxspeed, double ramp)
@@ -154,13 +154,13 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	
 	public void WriteDashboardData() 
 	{
-		/*SmartDashboard.putNumber("Gyro Angle", m_Gyro.getAngle());
+		SmartDashboard.putNumber("Gyro Angle", m_Gyro.getAngle());
 		SmartDashboard.putNumber("Gyro Rate", m_Gyro.getRate());
 		SmartDashboard.putNumber("LeftDriveEncoder Rate", m_LeftEncoder.getRate());
 		
 		// Do not change these names they are used for the DS Dashboard
 		SmartDashboard.putNumber("leftDriveEncoder", m_LeftEncoder.getDistance());
-		SmartDashboard.putNumber("rightDriveEncoder", m_RightEncoder.getDistance());*/
+		SmartDashboard.putNumber("rightDriveEncoder", m_RightEncoder.getDistance());
 	}
 
 }

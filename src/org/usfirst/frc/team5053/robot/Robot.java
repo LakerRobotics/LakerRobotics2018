@@ -36,7 +36,7 @@ public class Robot extends IterativeRobot
 	//Vision declaration
 	
 	//Subsystem constants
-//jjkljkljkljklkjl
+
 	//Vision constants
 	
 	//Autonomous variables
@@ -69,7 +69,7 @@ public class Robot extends IterativeRobot
     	m_RobotSensors = new RobotSensorMap();    	
     	
     	//Robot Subsystem Initialization
-    	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDrive(), m_RobotControllers.getRightDrive(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
+    	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
     	
     	
     	
@@ -117,8 +117,21 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during autonomous
          */
-    	
-    	switch(autonomousRoutine)
+    	switch(autonomousCase)
+    	{
+	    	case 0:
+	    		m_DriveTrain.DriveDistance(8*12, 10, 5);
+	    		autonomousCase++;
+	    		break;
+	    	case 1:
+	    		if(m_DriveTrain.isStraightPIDFinished())
+	    		{
+	    			m_DriveTrain.DisablePIDControl();
+	    			autonomousCase++;
+	    		}
+	    		break;
+    	}
+    	/*switch(autonomousRoutine)
     	{
     	case 0: // NO AUTON
     		break;
@@ -127,7 +140,7 @@ public class Robot extends IterativeRobot
 			break;
 		default: // NO AUTON
 			break;
-    	}
+    	}*/
     	
     	GetDashboardData();
     	WriteDashboardData();
@@ -390,6 +403,7 @@ public class Robot extends IterativeRobot
     	
     	
     	arcadeDrive();
+    	
     	m_DriveTrain.WriteDashboardData();
     	
     	//Shooter methods
@@ -412,11 +426,11 @@ public class Robot extends IterativeRobot
     {
     	if(m_RobotInterface.GetDriverLeftTrigger())
     	{
-    	 	m_DriveTrain.ArcadeDrive(m_RobotInterface.GetDriverLeftY()*0.7, m_RobotInterface.GetDriverRightX()*0.7);
+    	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*0.7, -m_RobotInterface.GetDriverRightX()*0.7);
     	}
     	else
     	{
-    	 	m_DriveTrain.ArcadeDrive(m_RobotInterface.GetDriverLeftY(), m_RobotInterface.GetDriverRightX());
+    	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY(), -m_RobotInterface.GetDriverRightX());
     	}
    }
     
@@ -430,7 +444,7 @@ public class Robot extends IterativeRobot
     }
     public void WriteDashboardData()
     {
-    	//m_DriveTrain.WriteDashboardData();
+    	m_DriveTrain.WriteDashboardData();
     	//SmartDashboard.putNumber("lidar", m_Lidar.getDistanceFt());
     }
 }
