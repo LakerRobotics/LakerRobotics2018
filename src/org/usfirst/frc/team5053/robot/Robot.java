@@ -31,6 +31,10 @@ public class Robot extends IterativeRobot
 	
 	//Robot Subsystem Declaration
 	private DriveTrainMotionControl m_DriveTrain;
+	// Elevator
+	// Intake
+	// Pneumatic Catapult
+	// Scaler
 	private LidarLite m_Lidar;
 	
 	//Vision declaration
@@ -43,7 +47,14 @@ public class Robot extends IterativeRobot
 	private int autonomousRoutine;
 	private int autonomousCase;
 	private int autonomousWait;
-	private int allianceSide;
+	
+	private String startPosition;	
+	private boolean secondPart;
+	private String matchData;
+	private int switchTurn;
+	private int scaleTurn;
+	private char switchChar;
+	private char scaleChar;
 	
 	// Diagnostic variables
 	//private NetworkTable m_NetworkTable;
@@ -70,8 +81,10 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	
-    	
+    	// Elevator
+    	// Intake
+    	// Pneumatic Catapult
+    	// Scaler
     	
     	CameraServer server = CameraServer.getInstance();
     	//server.setQuality(50);
@@ -93,22 +106,29 @@ public class Robot extends IterativeRobot
          * This function is called once when autonomous begins
          */
     	
-    	autonomousRoutine = (int) SmartDashboard.getNumber("autonRoutine", 0);
+    	// Initialize autonomous variables
     	autonomousCase = 0;
-    	autonomousWait = 0;
+    	autonomousWait = 0; // 20 loops per second
     	
-    	switch(DriverStation.getInstance().getAlliance())
-    	{
-    	case Red:
-    		allianceSide = -1;
-    		break;
-    	case Blue:
-    		allianceSide = 1;
-    		break;
-		default:
-    		allianceSide = 1;
-    	}
+    	// Get information about which autonomous routine to run
+    	autonomousRoutine = (int) SmartDashboard.getNumber("autonRoutine", 0);	// Which auton routine to run
+    	startPosition = SmartDashboard.getString("Start Position", "None");		// Start position of the robot from our side of the field
+    	secondPart = SmartDashboard.getBoolean("Second Part", false);			// Second part of auton routine
+    	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
+    	// Parse matchData  for the switch and scale position in order to determine which way to turn later
+    	switchChar = matchData.charAt(0);
+    	scaleChar = matchData.charAt(1);
+    	
+    	if(switchChar == 'R')
+    		switchTurn = 1; // Determines the switch plate we aim at where positive turns right(clockwise)
+    	else
+    		switchTurn = -1; // And negative turns left (counterclockwise) 
+    	
+    	if(scaleChar == 'R')
+    		scaleTurn = -1; // Final turn is always Counter clockwise when the scale is on the right side
+    	else
+    		scaleTurn = 1; // And vice versa
     }
 
     public void autonomousPeriodic()
@@ -117,30 +137,27 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during autonomous
          */
-    	switch(autonomousCase)
+    	switch(startPosition)
     	{
-	    	case 0:
-	    		m_DriveTrain.DriveDistance(8*12, 10, 5);
-	    		autonomousCase++;
-	    		break;
-	    	case 1:
-	    		if(m_DriveTrain.isStraightPIDFinished())
-	    		{
-	    			m_DriveTrain.DisablePIDControl();
-	    			autonomousCase++;
-	    		}
-	    		break;
-    	}
-    	/*switch(autonomousRoutine)
-    	{
-    	case 0: // NO AUTON
+    	case "None": // NO AUTON
     		break;
-    	case 9: // DEBUG
+    	case "Center": // CENTER AUTON SWITCH FIRST
+    		centerSwitch();
+			break;
+    	case "Left": // LEFT AUTON SCALE FIRST
+    		//scaleFirst();
+    		tournamentWinner();
+    		break;
+    	case "Right": // RIGHT AUTON SCALE FIRST
+    		//scaleFirst();
+    		tournamentWinner();
+    		break;
+    	case "Debug": // DEBUG AUTO
 			diagnosticTest();
 			break;
 		default: // NO AUTON
 			break;
-    	}*/
+    	}
     	
     	GetDashboardData();
     	WriteDashboardData();
@@ -221,170 +238,156 @@ public class Robot extends IterativeRobot
     	}
     	
     }
-    /*public void autonCenter(double visionTurn)
+    
+    public void centerSwitch()
     {
     	switch(autonomousCase)
     	{
-    	case 0: // Drive out from wall and engage gear peg
-    		System.out.println("Executing Center Autonomous");
-    		m_DriveTrain.ResetEncoders();
-    		m_DriveTrain.ResetGyro();
-    		m_DriveTrain.DriveDistance(70, 4.0, 24.0);
+    	case 0: // Drive to decision point
+    		m_DriveTrain.DriveDistance(9.5, 2, 1);
     		autonomousCase++;
     		break;
-    	case 1: // Disengage gear peg
+    	case 1: // Turn based on the position of the switch 
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
-    			if(autonomousWait >= 100)
-				{
-					m_DriveTrain.ResetEncoders();
-		    		m_DriveTrain.ResetGyro();
-		    		m_DriveTrain.DriveDistance(-24, 4, 24);
-		    		if(autonomousShoot)
-            		{
-            			autonomousCase++;
-            		}
-            		else
-            		{
-            			autonomousCase = 900;
-            		}
-    			}
-    		}
-    		else
-    		{
-    			autonomousWait = 0;
-    		}
-    		break;
-    	case 2: // Turn to face the boiler
-    		if(m_DriveTrain.isStraightPIDFinished())
-    		{
-    			
-    			m_DriveTrain.ResetEncoders();
-    			m_DriveTrain.ResetGyro();
-    			
-    			//TODO Blue is very off at 100deg
-    			if(allianceSide == -1) // RED
-    				m_DriveTrain.TurnToAngle(-98*allianceSide);
-    			else // BLUE
-    				m_DriveTrain.TurnToAngle(-105.5*allianceSide);
-    			
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(30*switchTurn);
     			autonomousCase++;
     		}
     		break;
-    	case 3: // Transition to vision align
+    	case 2: // Drive to the switch
     		if(m_DriveTrain.isTurnPIDFinished())
     		{
-    			m_DriveTrain.ResetEncoders();
-        		m_DriveTrain.ResetGyro();
-        		m_DriveTrain.DriveDistance(102, 8, 24);
-        		
-        		
-    			m_Shooter.SetShooterSetpoint(525);
-        		autonomousCase++;
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.DriveDistance(100, 3.5, 1);
+    			autonomousCase++;
     		}
     		break;
-    	case 4: // Vision align to high boiler
+    	case 3: // Turn to square the robot with the switch
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
-    			m_DriveTrain.arcadeDrive(0.6, 0.0);
-    			autonomousWait = 0;
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(-30*switchTurn);
     			autonomousCase++;
-    			
     		}
     		break;
-    	case 5: // Back off the boiler for the diameter of a fuel ball
-    		m_DriveTrain.DriveDistance(-5, 4, 1);
-    		autonomousCase++;
-    	case 6: // Shoot
-    		m_DriveTrain.arcadeDrive(0.6, 0.0);
-			if (autonomousWait >= 50)
-			{
-				m_Indexer.SetTalonOutput(INDEXER_SPEED);
-				m_DriveTrain.arcadeDrive(0.0, 0.0);
-				autonomousCase++;
-			}
-			break;
-    	case 7:
+    	case 4: // Release powercube onto switch plate
+    		if(m_DriveTrain.isTurnPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.ArcadeDrive(0, 0);
+    			// Release / shoot cube onto the switch plate
+    			autonomousCase++;
+    		}
     		break;
 		default:
-			if(m_DriveTrain.isStraightPIDFinished())
-    		{
-    			m_DriveTrain.ResetEncoders();
-    			m_DriveTrain.ResetGyro();
-    		}
-    		break;
+			break;
     	}
     }
-    */
     
-    /*public void dumbAutonRoutine()
+    public void scaleFirst()
+    {
+    	switch(autonomousCase)
+    	{
+    	case 0: // Drive to decision point
+    		m_DriveTrain.DriveDistance(19*12, 4, 1);
+    		autonomousCase++;
+    		break;
+    	case 1: // Make decision (Is the scale on the same side or do we have to cross the field?)
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			
+    			if(scaleChar == startPosition.charAt(1))
+    				autonomousCase = 6; // Straight ahead
+    			else
+    				autonomousCase++; // Cross the field
+    		}
+    		break;
+    	case 2: // Turn to cross the field
+    		m_DriveTrain.TurnToAngle(90*-scaleTurn); 
+    		// The turn is inverted in order to turn clockwise when scale is on right and counter clockwise when scale is on left 
+    		// This is the inverse of the above in the autonomous init
+    		autonomousCase++;
+    		break;
+    	case 3:
+    		if(m_DriveTrain.isTurnPIDFinished()) // Cross field
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.DriveDistance(15*12, 4, 2);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 4:
+    		if(m_DriveTrain.isStraightPIDFinished()) // Turn to face scale
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(90*scaleTurn);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 5: // Finish turn PID and meet back up with the other decision path
+    		if(m_DriveTrain.isTurnPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			autonomousCase++;
+    		}
+    		break;
+    	case 6: // Drive up to scale from decision point or parallel decision point
+    		m_DriveTrain.DriveDistance(70.5, 4, 1);
+    		autonomousCase++;
+    		break;
+    	case 7: // Turn to face scale
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(45*scaleTurn);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 8: // Shoot powercube onto scale plate
+    		if(m_DriveTrain.isTurnPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			// Shoot onto scale plate
+    		}
+    	}
+    }
+    
+    // Used solely to test the second portion of the scale first auton
+    public void tournamentWinner()
     {
     	switch(autonomousCase)
     	{
     	case 0:
-    		m_DriveTrain.ArcadeDrive(0.6, 0);
-    		autonomousWait++;
-    		if(autonomousWait >= 75)
-    		{
-    			autonomousWait = 0;
-    			autonomousCase++;
-    		}
+    		m_DriveTrain.TurnToAngle(90*-scaleTurn);
+    		autonomousCase++;
     		break;
     	case 1:
-    		if(autonomousWait >= 100)
+    		if(m_DriveTrain.isTurnPIDFinished())
     		{
-        		autonomousWait = 0;
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.DriveDistance(15*12, 4, 2);
     			autonomousCase++;
     		}
     		break;
     	case 2:
-    		m_DriveTrain.ArcadeDrive(-0.6, 0.0);
-    		if(autonomousWait >= 25)
+    		if(m_DriveTrain.isStraightPIDFinished())
     		{
-    			m_DriveTrain.ArcadeDrive(0.0, 0.0);
-    			autonomousWait = 0;
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(90*scaleTurn);
     			autonomousCase++;
     		}
     		break;
     	case 3:
-    		if(allianceSide == -1) // RED
-				m_DriveTrain.TurnToAngle(-100*allianceSide);
-			else // BLUE
-				m_DriveTrain.TurnToAngle(-102.5*allianceSide);
-    		break;
-    	case 4:
     		if(m_DriveTrain.isTurnPIDFinished())
     		{
+    			m_DriveTrain.DisablePIDControl();
     			autonomousCase++;
-    			autonomousWait = 0;
-    		}
-    		break;
-    	case 5:
-    		m_DriveTrain.ArcadeDrive(0.6, 0);
-    		
-    		if(autonomousWait >= 150)
-    		{
-    			m_DriveTrain.ArcadeDrive(0.0, 0.0);
-    			autonomousWait = 0;
-    			autonomousCase++;
-    		}
-    	case 6:
-    		if(autonomousWait == 0)
-    		{
-        		m_Shooter.EnablePID();
-    			m_Shooter.SetShooterSetpoint(530);
-    		}
-    		
-    		if(autonomousWait >= 50)
-    		{
-    			m_Indexer.SetTalonOutput(INDEXER_SPEED);
     		}
     		break;
     	}
     }
-    */
-    
-    
     
     public void teleopPeriodic()
     {
@@ -392,6 +395,7 @@ public class Robot extends IterativeRobot
          * This function is called periodically during operator control
          */
     	
+    	// For quick testing reset
     	if(autonomousCase != 0)
     	{
     		autonomousCase = 0;
@@ -400,7 +404,6 @@ public class Robot extends IterativeRobot
     	
     	GetDashboardData();
     	WriteDashboardData();
-    	
     	
     	arcadeDrive();
     	
@@ -424,6 +427,7 @@ public class Robot extends IterativeRobot
     //Drivetrain methods
     public void arcadeDrive()
     {
+    	// Unfortunately both drive motor groups must be inverted in order for the encoders to properly read (On Lil' Geek) which is why the inputs are inverted here
     	if(m_RobotInterface.GetDriverLeftTrigger())
     	{
     	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*0.7, -m_RobotInterface.GetDriverRightX()*0.7);
@@ -445,6 +449,5 @@ public class Robot extends IterativeRobot
     public void WriteDashboardData()
     {
     	m_DriveTrain.WriteDashboardData();
-    	//SmartDashboard.putNumber("lidar", m_Lidar.getDistanceFt());
     }
 }

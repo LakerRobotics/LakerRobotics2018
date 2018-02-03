@@ -25,7 +25,7 @@ public class MotionController
 	private double m_AngularVelocityTolerance;
 	private boolean m_PIDEnabled;
 	
-	private final double TurnKp = 0.00125;
+	private final double TurnKp = 0.0025;
 	private final double TurnKi = 0.0020;
 	private final double TurnKd = 0.0;
 	
@@ -56,8 +56,8 @@ public class MotionController
 		m_targetDistance = 0;
 		m_targetAngle = 0;
 		m_StraightTolerance = 0.5;
-		m_TurnTolerance = 0.25;
-		m_AngularVelocityTolerance = 30;
+		m_TurnTolerance = 0.5;
+		m_AngularVelocityTolerance = 15;
 		m_PIDEnabled = false;
 		
 	}
@@ -71,9 +71,9 @@ public class MotionController
 			
 			double start = 0;
 			
-			double convertedDistance = distance;
-			double convertedSpeed = maxspeed * 12; // Inches
-			double convertedRamp = ramp;
+			double convertedDistance = distance;	// Inches
+			double convertedSpeed = maxspeed * 12; 	// Converted from Feet/Second to Inches/Second
+			double convertedRamp = ramp;			// Inches/Second
 			
 			if (!(Math.abs(m_DriveTrain.GetLeftDistance()) > Math.abs(m_targetDistance)))
 			{
@@ -101,11 +101,12 @@ public class MotionController
 		{
 			m_DriveTrain.ResetGyro();
 			
-			//Magic numbers need fixing
-			double maxRPM = 15/*30*/;
-			double ramp = maxRPM * 2/* 3.5 * maxRPM*/;
+			//TODO Magic numbers need fixing
+			//TODO What are the units?
+			double maxRPM = 15/*30*/;			// Rotations/Minute
+			double ramp = 30/* 3.5 * maxRPM*/;	// I guess its also rotations per minute?
 			
-			double maxSpeed = maxRPM * 6; //360 Degrees/60 seconds to convert RPM to speed or degrees per second
+			double maxSpeed = maxRPM * 6; // 360 Degrees/60 seconds to convert RPM to speed or degrees per second
 			double start = m_DriveTrain.GetAngle();
 			m_targetAngle = turnAngle + start;
 			
@@ -134,7 +135,7 @@ public class MotionController
 	 * @param distance  to travel in inches
 	 * @param maxSpeed  in ft/sec
 	 * @param ramp      in inches
-	 * @param radiusOfArch  The arc travel path of the robot
+	 * @param radiusOfArc  The arc travel path of the robot
 	 * @return true if it has completed the arc path
 	 */
 	public boolean ExecuteArcMotion(double distance, double maxSpeed, double ramp, double radiusOfArc)
@@ -148,9 +149,9 @@ public class MotionController
 		
 		if (!isPIDEnabled())
 		{
-			double convertedDistance = distance;
-			double convertedSpeed = maxSpeed * 12; // convert to Inches/sec
-			double convertedRamp = ramp; // in inches
+			double convertedDistance = distance; 	// In inches
+			double convertedSpeed = maxSpeed * 12; 	// convert from feet to inches/second
+			double convertedRamp = ramp; 			// in inches
 			
 			motionControlArc = new ArcMotionPIDOutput(m_DriveTrain, m_TurnSource, radiusOfArc);
 
