@@ -55,4 +55,28 @@ public class SubsystemTemplate implements Subsystem
 	public void WriteDashboardData() {
 		// TODO Auto-generated method stub
 	}
+
+	@Override
+	public boolean isClosedLoopControl() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean enableClosedLoopControl(double target, double speed, double ramp) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean disableClosedLoopControl() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isOnTarget() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

@@ -10,13 +10,14 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 /**
  * Drivetrain subsystem that extends the FRC RobotDrive class.
  * @author Colin Ross
  *
  */
 
-public class DriveTrain extends RobotDrive implements Subsystem
+public class DriveTrain extends DifferentialDrive implements Subsystem
 {
 	/**
 	 * Hello There! : I'm the base constructor.
@@ -236,6 +237,26 @@ public class DriveTrain extends RobotDrive implements Subsystem
 	public void WriteDashboardData() {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public boolean isClosedLoopControl() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	@Override
+	public boolean enableClosedLoopControl(double target, double speed, double ramp) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	@Override
+	public boolean disableClosedLoopControl() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	@Override
+	public boolean isOnTarget() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }
