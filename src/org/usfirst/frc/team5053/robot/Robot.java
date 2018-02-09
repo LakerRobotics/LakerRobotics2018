@@ -112,7 +112,8 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	autonomousRoutine = (int) SmartDashboard.getNumber("autonRoutine", 0);	// Which auton routine to run
-    	startPosition = SmartDashboard.getString("Start Position", "None");		// Start position of the robot from our side of the field
+    	// TODO Make sure this is defaulted to the correct value when put to production
+    	startPosition = SmartDashboard.getString("Start Position", "Test");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Part", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -137,24 +138,27 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during autonomous
          */
-    	switch(startPosition)
+    	switch(startPosition.toLowerCase())
     	{
-    	case "None": // NO AUTON
+    	case "none": // NO AUTON
     		break;
-    	case "Center": // CENTER AUTON SWITCH FIRST
+    	case "center": // CENTER AUTON SWITCH FIRST
     		centerSwitch();
 			break;
-    	case "Left": // LEFT AUTON SCALE FIRST
+    	case "left": // LEFT AUTON SCALE FIRST
     		//scaleFirst();
     		tournamentWinner();
     		break;
-    	case "Right": // RIGHT AUTON SCALE FIRST
-    		//scaleFirst();
-    		tournamentWinner();
+    	case "right": // RIGHT AUTON SCALE FIRST
+    		scaleFirst();
+    		//tournamentWinner();
     		break;
-    	case "Debug": // DEBUG AUTO
+    	case "debug": // DEBUG AUTO
 			diagnosticTest();
 			break;
+    	case "test":
+    		turnTest();
+    		break;
 		default: // NO AUTON
 			break;
     	}
@@ -163,6 +167,28 @@ public class Robot extends IterativeRobot
     	WriteDashboardData();
     	
     	autonomousWait++;
+    }
+    
+    public void turnTest()
+    {
+    	switch(autonomousCase)
+    	{
+    	case 0:
+    		m_DriveTrain.setAngle(90);
+    		m_DriveTrain.enableTurnPID();
+    		autonomousCase++;
+    		break;
+    	case 1:
+    		if(m_DriveTrain.isTurnPIDOnTarget())
+    		{
+    			m_DriveTrain.disableTurnPID();
+    			m_DriveTrain.ArcadeDrive(0, 0);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 2:
+    		break;
+    	}
     }
     
     public void diagnosticTest()
@@ -289,28 +315,30 @@ public class Robot extends IterativeRobot
     {
     	switch(autonomousCase)
     	{
-    	case 0: // Drive to decision point
+    	case 0: // Path our routine
+    		if(scaleChar == startPosition.charAt(0))
+				autonomousCase++; // ******Straight ahead
+			else
+	    		autonomousCase = 2;// Cross the field
+    		break;
+    	case 1: // ******Drive directly to the scale as we started on the same side as the scale
+    			m_DriveTrain.DriveDistance(19*12 + 70.5, 4, 1);
+    			autonomousCase = 8; // ******Jump to the end of the routine
+    		break;
+    	case 2: // Drive to the decision point
     		m_DriveTrain.DriveDistance(19*12, 4, 1);
     		autonomousCase++;
     		break;
-    	case 1: // Make decision (Is the scale on the same side or do we have to cross the field?)
+    	case 3: // Turn to cross the field
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
-    			m_DriveTrain.DisablePIDControl();
-    			
-    			if(scaleChar == startPosition.charAt(1))
-    				autonomousCase = 6; // Straight ahead
-    			else
-    				autonomousCase++; // Cross the field
+        		m_DriveTrain.TurnToAngle(90*-scaleTurn); 
+        		// The turn is inverted in order to turn clockwise when scale is on right and counter clockwise when scale is on left 
+        		// This is the inverse of the above in the autonomous init
+        		autonomousCase++;
     		}
     		break;
-    	case 2: // Turn to cross the field
-    		m_DriveTrain.TurnToAngle(90*-scaleTurn); 
-    		// The turn is inverted in order to turn clockwise when scale is on right and counter clockwise when scale is on left 
-    		// This is the inverse of the above in the autonomous init
-    		autonomousCase++;
-    		break;
-    	case 3:
+    	case 4:
     		if(m_DriveTrain.isTurnPIDFinished()) // Cross field
     		{
     			m_DriveTrain.DisablePIDControl();
@@ -318,7 +346,7 @@ public class Robot extends IterativeRobot
     			autonomousCase++;
     		}
     		break;
-    	case 4:
+    	case 5:
     		if(m_DriveTrain.isStraightPIDFinished()) // Turn to face scale
     		{
     			m_DriveTrain.DisablePIDControl();
@@ -326,26 +354,27 @@ public class Robot extends IterativeRobot
     			autonomousCase++;
     		}
     		break;
-    	case 5: // Finish turn PID and meet back up with the other decision path
+    	case 6: // Finish turn PID and meet back up with the other decision path
     		if(m_DriveTrain.isTurnPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
     			autonomousCase++;
     		}
     		break;
-    	case 6: // Drive up to scale from decision point or parallel decision point
+    	case 7: // Drive up to scale from decision point or parallel decision point
     		m_DriveTrain.DriveDistance(70.5, 4, 1);
     		autonomousCase++;
     		break;
-    	case 7: // Turn to face scale
+    	case 8: // Turn to face scale
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
+    			// TODO what is the actual angle
     			m_DriveTrain.TurnToAngle(45*scaleTurn);
     			autonomousCase++;
     		}
     		break;
-    	case 8: // Shoot powercube onto scale plate
+    	case 9: // Shoot powercube onto scale plate
     		if(m_DriveTrain.isTurnPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
@@ -355,6 +384,8 @@ public class Robot extends IterativeRobot
     }
     
     // Used solely to test the second portion of the scale first auton
+    // Starts on case 2 of the scaleFirst routine when the scale position and start position do not match
+    // End case matches case 5 of the scaleFirsr routine where the turn PID is ended in order to cleanly meet back up with the other decision path
     public void tournamentWinner()
     {
     	switch(autonomousCase)
@@ -435,6 +466,7 @@ public class Robot extends IterativeRobot
     	else
     	{
     	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY(), -m_RobotInterface.GetDriverRightX());
+
     	}
    }
     

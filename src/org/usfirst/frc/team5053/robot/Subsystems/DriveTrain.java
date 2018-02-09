@@ -10,13 +10,14 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 /**
  * Drivetrain subsystem that extends the FRC RobotDrive class.
  * @author Colin Ross
  *
  */
 
-public class DriveTrain extends RobotDrive implements Subsystem
+public class DriveTrain extends DifferentialDrive implements Subsystem
 {
 	/**
 	 * Hello There! : I'm the base constructor.
@@ -91,7 +92,7 @@ public class DriveTrain extends RobotDrive implements Subsystem
 		m_RightMotor.setInverted(true);
 		
 		m_DistancePIDWrapper = new DistancePIDWrapper(this);
-		m_AnglePIDWrapper = new AnglePIDWrapper(this);
+		/*m_AnglePIDWrapper = new AnglePIDWrapper(this);*/
 		
 		
 		//this.setExpiration(0.1);
@@ -100,8 +101,8 @@ public class DriveTrain extends RobotDrive implements Subsystem
 		m_DistancePID = new PIDController(0.1, 0.0, 0.0, m_DistancePIDWrapper, m_DistancePIDWrapper);
 		m_DistancePID.setAbsoluteTolerance(5.2);
 		
-		m_AnglePID = new PIDController(0.1, 0.0, 0.0, m_AnglePIDWrapper, m_AnglePIDWrapper);
-		m_AnglePID.setAbsoluteTolerance(2.5);
+		/*m_AnglePID = new PIDController(0.1, 0.0, 0.0, m_AnglePIDWrapper, m_AnglePIDWrapper);
+		m_AnglePID.setAbsoluteTolerance(2.5);*/
 		
 		System.out.println("Constructor finished");
 	}
@@ -144,7 +145,9 @@ public class DriveTrain extends RobotDrive implements Subsystem
 	{
 		m_speed = speed;
 		m_turn = angle;
-		this.ArcadeDrive(speed, angle);
+		// System.out.println("Speed: " + speed);
+		// System.out.println("Angle: " + angle);
+		this.arcadeDrive(speed, angle);
 	}
 	public void SetSpeed(double speed)
 	{
@@ -164,7 +167,7 @@ public class DriveTrain extends RobotDrive implements Subsystem
 	}
 	public void SetTurn(double turn)
 	{
-		ArcadeDrive(m_speed, turn);
+		this.ArcadeDrive(m_speed, turn);
 	}
 	public double GetSpeed()
 	{
@@ -208,10 +211,10 @@ public class DriveTrain extends RobotDrive implements Subsystem
 	}
 	public boolean AngleOnTarget()
 	{
-		if(Math.abs(GetAnglePIDSetpoint() - GetAngle()) < 2.5)
-		{
-			return true;
-		} else return false;
+		System.out.println("Setpoint: " + m_AnglePID.getSetpoint());
+		System.out.println("Angle: " + m_Gyro.getAngle());
+		System.out.println("PID Enabled:" + m_AnglePID.isEnabled());
+		return Math.abs(GetAnglePIDSetpoint() - GetAngle()) < 2.5;
 	}
 	public void SetPIDSetpoint(double distance, double angle)
 	{
