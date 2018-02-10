@@ -1,5 +1,4 @@
 package org.usfirst.frc.team5053.robot.Subsystems.Utilities;
-import org.usfirst.frc.team5053.robot.Subsystems.DriveTrain;
 import org.usfirst.frc.team5053.robot.Subsystems.DriveTrainMotionControl;
 
 import edu.wpi.first.wpilibj.PIDOutput;
@@ -8,8 +7,8 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 
 public class SwingPIDWrapper implements PIDOutput, PIDSource {
 	
-	private DriveTrain m_drivetrain;
-	public SwingPIDWrapper(DriveTrain drivetrain)
+	private DriveTrainMotionControl m_drivetrain;
+	public SwingPIDWrapper(DriveTrainMotionControl drivetrain)
 	{
 		m_drivetrain = drivetrain;
 	}

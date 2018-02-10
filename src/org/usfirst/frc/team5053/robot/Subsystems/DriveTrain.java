@@ -33,7 +33,7 @@ public class DriveTrain extends DifferentialDrive implements Subsystem
 	
 	private DistancePIDWrapper m_DistancePIDWrapper;
 	private AnglePIDWrapper m_AnglePIDWrapper;
-	private SwingPIDWrapper m_SwingPIDWrapper;
+	
 	
 	
 	private Encoder m_LeftEncoder;
@@ -43,8 +43,7 @@ public class DriveTrain extends DifferentialDrive implements Subsystem
 	
 	private double m_speed = 0.0;
 	private double m_turn = 0.0;
-	private double m_swingTurnValue = 0.0;
-	private boolean m_swingTurnLeft = false;
+	
 	
 	public DriveTrain(SpeedController leftMotor, SpeedController rightMotor) 
 	{
@@ -97,8 +96,8 @@ public class DriveTrain extends DifferentialDrive implements Subsystem
 		m_RightMotor.setInverted(true);
 		
 		m_DistancePIDWrapper = new DistancePIDWrapper(this);
-		m_AnglePIDWrapper = new AnglePIDWrapper(this);
-		m_SwingPIDWrapper = new SwingPIDWrapper(this);
+		//m_AnglePIDWrapper = new AnglePIDWrapper(this);
+		
 		
 		
 		//this.setExpiration(0.1);
@@ -110,8 +109,7 @@ public class DriveTrain extends DifferentialDrive implements Subsystem
 		m_AnglePID = new PIDController(0.1, 0.0, 0.0, m_AnglePIDWrapper, m_AnglePIDWrapper);
 		m_AnglePID.setAbsoluteTolerance(2.5);
 		
-		m_SwingPID = new PIDController(0.1, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
-		m_SwingPID.setAbsoluteTolerance(2.5);
+		
 		
 		System.out.println("Constructor finished");
 	}
@@ -233,45 +231,7 @@ public class DriveTrain extends DifferentialDrive implements Subsystem
 		m_AnglePID.setSetpoint(angle);
 		
 	}
-	public boolean StartSwingTurn() {
-		try {
-			if (!m_SwingPID.isEnabled()) {
-				m_SwingPID.enable();
-			}
-			return true;
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-		}
-		return false;
-		
-	}
-	public boolean SetSwingParameters(double angle, boolean isLeft) {
-		try {
-			m_SwingPID.setSetpoint(angle);
-			m_swingTurnLeft = isLeft;
-			
-			return true;
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-		}
-		return false;
-	}
-	public void SwingTurn(double turnSpeed) {
-		m_swingTurnValue = turnSpeed;
-		
-		if (m_swingTurnLeft) {
-			this.tankDrive(0, turnSpeed);
-		} else {
-			this.tankDrive(turnSpeed, 0);
-		}
-	}
-	public boolean SwingAngleOnTarget()
-	{
-		if(Math.abs(GetSwingPIDSetpoint() - GetAngle()) < 2.5)
-		{
-			return true;
-		} else return false;
-	}
+	
 	double GetDistancePIDSetpoint() 
 	{
 		return m_DistancePID.getSetpoint();
@@ -280,10 +240,7 @@ public class DriveTrain extends DifferentialDrive implements Subsystem
 	{
 		return m_AnglePID.getSetpoint();
 	}
-	double GetSwingPIDSetpoint()
-	{
-		return m_SwingPID.getSetpoint();
-	}
+	
 	public HashMap<String, Double> GetDashboardData() {
 		return null;
 		// TODO Auto-generated method stub
