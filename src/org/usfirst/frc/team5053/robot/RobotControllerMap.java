@@ -18,15 +18,17 @@ import com.ctre.CANTalon;
 
 public class RobotControllerMap
 {
-	private final int leftDrive1PWM = 0;
-	private final int leftDrive2PWM = 1;
-	private final int rightDrive1PWM = 2;
-	private final int rightDrive2PWM = 3;
+	private final int leftDrive1PWM 	= 0;
+	private final int leftDrive2PWM 	= 1;
+	private final int rightDrive1PWM 	= 2;
+	private final int rightDrive2PWM 	= 3;
+	private final int elevatorPWM 		= 4;
 
 	private Talon m_LeftDrive1;
 	private Talon m_LeftDrive2;
 	private Talon m_RightDrive1;
 	private Talon m_RightDrive2;
+	private Talon m_Elevator;
 	
 	private SpeedControllerGroup m_LeftDrive;
 	private SpeedControllerGroup m_RightDrive;
@@ -47,6 +49,8 @@ public class RobotControllerMap
 		m_RightDrive2 = new Talon(rightDrive2PWM);
 		m_RightDrive = new SpeedControllerGroup(m_RightDrive1, m_RightDrive2);
 		m_RightDrive.setInverted(true);
+		
+		m_Elevator = new Talon(elevatorPWM);
 	}
 	
 	public SpeedControllerGroup getLeftDriveGroup()

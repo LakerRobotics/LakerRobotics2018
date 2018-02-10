@@ -1,5 +1,5 @@
 package org.usfirst.frc.team5053.robot.Subsystems.Utilities;
-import org.usfirst.frc.team5053.robot.Subsystems.DriveTrain;
+import org.usfirst.frc.team5053.robot.Subsystems.DriveTrainMotionControl;
 
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
@@ -7,21 +7,22 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 
 public class AnglePIDWrapper implements PIDOutput, PIDSource {
 	
-	private DriveTrain m_drivetrain;
-	public AnglePIDWrapper(DriveTrain drivetrain)
+	private DriveTrainMotionControl m_DriveTrain;
+	
+	public AnglePIDWrapper(DriveTrainMotionControl drivetrain)
 	{
-		m_drivetrain = drivetrain;
+		m_DriveTrain = drivetrain;
 	}
 
 	@Override
 	public PIDSourceType getPIDSourceType() {
 		// TODO Auto-generated method stub
-		return null;
+		return PIDSourceType.kDisplacement;
 	}
 
 	@Override
 	public double pidGet() {
-		return (m_drivetrain.GetAngle());
+		return (m_DriveTrain.GetAngle());
 	}
 
 	@Override
@@ -32,7 +33,8 @@ public class AnglePIDWrapper implements PIDOutput, PIDSource {
 
 	@Override
 	public void pidWrite(double output) {
-		m_drivetrain.SetTurn(output);
+		// TODO I had to invert this
+		m_DriveTrain.setTurn(-output);
 	}
 
 }
