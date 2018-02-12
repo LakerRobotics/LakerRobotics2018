@@ -2,7 +2,10 @@ package org.usfirst.frc.team5053.robot;
 
 import org.usfirst.frc.team5053.robot.RobotInterfaceMap.JoystickType;
 import org.usfirst.frc.team5053.robot.Sensors.LidarLite;
+import org.usfirst.frc.team5053.robot.Subsystems.Catapult;
 import org.usfirst.frc.team5053.robot.Subsystems.DriveTrainMotionControl;
+import org.usfirst.frc.team5053.robot.Subsystems.Elevator;
+import org.usfirst.frc.team5053.robot.Subsystems.Intake;
 
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -13,9 +16,38 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * 
- * STEAMWORKS 2017
+ * Power Up 2018
  * Laker Robotics 
  * 
+ * 
+ * Driver Controls
+ * Left Stick - Pitch
+ * Right Stick - Yaw
+ * Left Trigger - 70% Speed
+ * Right Trigger - 
+ * Left Bumper - 100% Speed
+ * Right Bumper -
+ * Select -
+ * Start -
+ * A -
+ * B -
+ * X -
+ * Y - 
+ * 
+ * 
+ * Operator Controls
+ * Left Stick - Manual Elevator Height
+ * Right Stick - Rotate Cube?
+ * Left Trigger - Fire Catapult (If armed)
+ * Right Trigger - Release Cube
+ * Left Bumper -
+ * Right Bumper - Intake Cube
+ * Select -
+ * Start -
+ * A - Elevator to Floor Pickup
+ * B - Elevator to Transfer
+ * X - Elevator to Switch High
+ * Y - Elevator to Switch Low
  */
 
 public class Robot extends IterativeRobot
@@ -31,10 +63,9 @@ public class Robot extends IterativeRobot
 	
 	//Robot Subsystem Declaration
 	private DriveTrainMotionControl m_DriveTrain;
-	// Elevator
-	// Intake
-	// Pneumatic Catapult
-	// Scaler
+	private Elevator m_Elevator;
+	private Intake m_Intake;
+	private Catapult m_ThePult;
 	private LidarLite m_Lidar;
 	
 	//Vision declaration
@@ -64,8 +95,15 @@ public class Robot extends IterativeRobot
 	private double[] diagnosticPowerSent;
 	private int arrIndex;
 	
-	//Misc variables
 	
+	
+	//Misc variables
+	private final double kFloor = 0.0;
+	private final double kTransfer = 0.0;
+	private final double kLow = 0.0;
+	private final double kHigh = 0.0;
+	
+	private int m_catapultDelay = 0;
 	
 	@Override
     public void robotInit()
@@ -81,9 +119,9 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	// Elevator
-    	// Intake
-    	// Pneumatic Catapult
+    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
+    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake());
+    	m_ThePult = new Catapult(m_RobotControllers.getCatapult());
     	// Scaler
     	
     	CameraServer server = CameraServer.getInstance();
@@ -437,6 +475,9 @@ public class Robot extends IterativeRobot
     	WriteDashboardData();
     	
     	arcadeDrive();
+    	elevatorControl();
+    	intakeControl();
+    	catapultControl();
     	
     	m_DriveTrain.WriteDashboardData();
     	
@@ -469,6 +510,49 @@ public class Robot extends IterativeRobot
 
     	}
    }
+    public void elevatorControl() {
+    	
+    	if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
+    		m_Elevator.setPosition(kFloor);
+    	} else if (m_RobotInterface.GetOperatorB() && !(m_Elevator.getPositionTarget() == kTransfer)) {
+    		m_Elevator.setPosition(kTransfer);
+    	} else if (m_RobotInterface.GetOperatorX() && !(m_Elevator.getPositionTarget() == kHigh)) {
+    		m_Elevator.setPosition(kHigh);
+    	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
+    		m_Elevator.setPosition(kLow);
+    	} else if (Math.abs(m_RobotInterface.GetOperatorLeftY()) > .05) {
+    		m_Elevator.disablePID();
+    		m_Elevator.manualControl(m_RobotInterface.GetOperatorLeftY());
+    	}
+    }
+    public void intakeControl() {
+    	if (m_RobotInterface.GetOperatorRightBumper() && !m_RobotInterface.GetOperatorRightTrigger()) {
+    		m_Intake.IntakeCube();
+    	} else if (m_RobotInterface.GetOperatorRightTrigger() && !m_RobotInterface.GetOperatorRightBumper()) {
+    		m_Intake.ReleaseCube();
+    	} else if (m_RobotInterface.GetOperatorRightX() > .25 && !m_RobotInterface.GetOperatorRightBumper() && !m_RobotInterface.GetOperatorRightTrigger()){
+    		m_Intake.RotateRight();
+    	} else if (m_RobotInterface.GetOperatorRightX() < -.25 && !m_RobotInterface.GetOperatorRightBumper() && !m_RobotInterface.GetOperatorRightTrigger()){
+    		m_Intake.RotateLeft();
+    	} else {
+    		m_Intake.StopIntake();
+    	}
+    }
+    public void catapultControl() {
+    	
+    	if (m_RobotInterface.GetOperatorLeftTrigger() && m_catapultDelay == 0) {
+    		m_ThePult.Launch();
+    		m_catapultDelay = 100;
+    	} else if (m_catapultDelay <= 0) {
+    		m_catapultDelay = 0;
+    		m_ThePult.Arm();
+    	}
+    	
+    	if (m_catapultDelay > 0) {
+    		m_catapultDelay--;
+    	}
+    	
+    }
     
     
     public void GetDashboardData()
