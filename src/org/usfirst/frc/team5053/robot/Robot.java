@@ -157,7 +157,7 @@ public class Robot extends IterativeRobot
 			diagnosticTest();
 			break;
     	case "test":
-    		turnTest();
+    		swingTest();
     		break;
 		default: // NO AUTON
 			break;
@@ -187,6 +187,44 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 2:
+    		break;
+    	}
+    }
+    
+    public void swingTest()
+    {
+    	switch(autonomousCase)
+    	{
+    	case 0:
+    		m_DriveTrain.ResetGyro();
+    		m_DriveTrain.SetSwingParameters(30, true);
+    		m_DriveTrain.StartSwingTurn();
+    		autonomousCase++;
+    		break;
+    	case 1:
+    		//if(m_DriveTrain.SwingAngleOnTarget())
+    		if(m_DriveTrain.SwingAngleOnTarget())
+    		{
+        		m_DriveTrain.disableSwingPID();
+        		m_DriveTrain./*DriveDistance*/DriveControlledAngle(12*4.5, 4, 5, 30);
+    			
+    			autonomousCase++;
+    		}
+    		break;
+    	case 2:
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+        		m_DriveTrain.SetSwingParameters(0, false);
+        		m_DriveTrain.StartSwingTurn();
+    			autonomousCase++;
+    		}
+    		break;
+    	case 3:
+    		if(m_DriveTrain.SwingAngleOnTarget())
+    		{
+    			m_DriveTrain.disableSwingPID();
+    		}
     		break;
     	}
     }

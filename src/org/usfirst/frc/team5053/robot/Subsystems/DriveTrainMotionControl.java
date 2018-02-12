@@ -44,6 +44,8 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	private double m_Turn = 0.0;
 	private double m_swingTurnValue = 0.0;
 	private boolean m_swingTurnLeft = false;
+	private final double SWING_TOLERANCE = 1.0;
+	
 	public DriveTrainMotionControl(SpeedControllerGroup leftMotorGroup, SpeedControllerGroup rightMotorGroup, Encoder leftEncoder, Encoder rightEncoder, ADXRS450_Gyro gyro)
 	{
 		super(leftMotorGroup, rightMotorGroup);
@@ -63,8 +65,9 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_SwingPIDWrapper = new SwingPIDWrapper(this);
 		
-		m_SwingPID = new PIDController(0.1, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
-		m_SwingPID.setAbsoluteTolerance(2.5);
+		m_SwingPID = new PIDController(0.05, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
+		m_SwingPID.setOutputRange(-0.75, 0.75);
+		m_SwingPID.setAbsoluteTolerance(SWING_TOLERANCE);
 	}
 	
 	
@@ -109,6 +112,11 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 			isPIDRunning = 	m_MotionController.ExecuteStraightMotion(distance, maxspeed, ramp);
 		}
 		
+	}
+	public void DriveControlledAngle(double distance, double maxspeed, double ramp, double angle)
+	{
+		if(!isPIDRunning)
+			isPIDRunning = m_MotionController.ExecuteControlledAngleDriveMotion(distance, maxspeed, ramp, angle);
 	}
 	public void TurnToAngle(double turnAngle)
 	{
@@ -234,15 +242,20 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	public void SwingTurn(double turnSpeed) {
 		m_swingTurnValue = turnSpeed;
 		
-		if (m_swingTurnLeft) {
+		System.out.println("Swing turn speed: " + turnSpeed);
+		
+		if (m_swingTurnLeft) 
+		{
 			this.tankDrive(0, turnSpeed);
-		} else {
-			this.tankDrive(turnSpeed, 0);
+		} 
+		else 
+		{
+			this.tankDrive(-turnSpeed, 0);
 		}
 	}
 	public boolean SwingAngleOnTarget()
 	{
-		if(Math.abs(GetSwingPIDSetpoint() - GetAngle()) < 2.5)
+		if(Math.abs(GetSwingPIDSetpoint() - GetAngle()) < SWING_TOLERANCE)
 		{
 			return true;
 		} else return false;
@@ -250,6 +263,13 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	double GetSwingPIDSetpoint()
 	{
 		return m_SwingPID.getSetpoint();
+	}
+	public boolean disableSwingPID()
+	{
+		if(m_SwingPID.isEnabled())
+			m_SwingPID.disable();
+		
+		return true;
 	}
 	public HashMap<String, Double> GetDashboardData() 
 	{
