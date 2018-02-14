@@ -157,7 +157,8 @@ public class Robot extends IterativeRobot
 			diagnosticTest();
 			break;
     	case "test":
-    		swingTest();
+    		//swingTest();
+    		straightTest();
     		break;
 		default: // NO AUTON
 			break;
@@ -182,6 +183,26 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.isTurnPIDOnTarget())
     		{
     			m_DriveTrain.disableTurnPID();
+    			m_DriveTrain.ArcadeDrive(0, 0);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 2:
+    		break;
+    	}
+    }
+    public void straightTest()
+    {
+    	switch(autonomousCase)
+    	{
+    	case 0:
+    		m_DriveTrain.DriveDistance(60, 10, 8);
+    		autonomousCase++;
+    		break;
+    	case 1:
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
     			m_DriveTrain.ArcadeDrive(0, 0);
     			autonomousCase++;
     		}

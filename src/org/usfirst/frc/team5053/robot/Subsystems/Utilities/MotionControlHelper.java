@@ -24,7 +24,7 @@ public class MotionControlHelper {
     double m_currentMeasuredDistance  = 0.0d;
     double m_initialMeasuredDistance  = 0.0d;
  
-   	public double percentDeadZoneOverride = 0.50;//enter portion of 1 (e.g. .1 for 10%)
+   	public double percentDeadZoneOverride = 0.5;//enter portion of 1 (e.g. .1 for 10%)
    
 	PIDOutput m_output;
 	PIDSource m_source;
@@ -86,6 +86,7 @@ public class MotionControlHelper {
        
        // get the motors going in the right direction
        double gapEnd = m_targetDistance-currentMeasuredDistance;
+       double rampDown = m_rampUpRampDownDistance * 6;
        if(gapEnd == 0) 
        {
     	   targetSpeed = 0;
@@ -117,7 +118,7 @@ public class MotionControlHelper {
        }
        
        // Calculate reduction to the speed if we are at the end
-       double percentRampDown = Math.abs(gapEnd)/m_rampUpRampDownDistance;
+       double percentRampDown = Math.abs(gapEnd)/rampDown;
        if (Math.abs(percentRampDown)>1)  percentRampDown = 1; // limit percent to 100%
 
        //Apply any speed reductions based on rampUp or rampDown.
@@ -128,7 +129,9 @@ public class MotionControlHelper {
        //}
        //else{
        // If we are near the end, then ramp down
-       if(Math.abs(gapEnd) < m_rampUpRampDownDistance) 
+       if (Math.abs(gapStart) < m_rampUpRampDownDistance) {
+    	   targetSpeed = percentRampUp * targetSpeed;
+       } else if(Math.abs(gapEnd) < rampDown) 
        {
     	   targetSpeed = percentRampDown * targetSpeed;
        }
