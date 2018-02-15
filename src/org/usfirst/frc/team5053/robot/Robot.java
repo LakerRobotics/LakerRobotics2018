@@ -48,7 +48,7 @@ public class Robot extends IterativeRobot
 	private int autonomousCase;
 	private int autonomousWait;
 	
-	private String startPosition;	
+	private String autonRoutine;	
 	private boolean secondPart;
 	private String matchData;
 	private int switchTurn;
@@ -111,9 +111,8 @@ public class Robot extends IterativeRobot
     	autonomousWait = 0; // 20 loops per second
     	
     	// Get information about which autonomous routine to run
-    	autonomousRoutine = (int) SmartDashboard.getNumber("autonRoutine", 0);	// Which auton routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	startPosition = SmartDashboard.getString("Start Position", "Test");		// Start position of the robot from our side of the field
+    	autonRoutine = SmartDashboard.getString("Auton Routine", "Center Scale");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Part", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -138,27 +137,29 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during autonomous
          */
-    	switch(startPosition.toLowerCase())
+    	switch(autonRoutine.toLowerCase())
     	{
     	case "none": // NO AUTON
     		break;
     	case "center": // CENTER AUTON SWITCH FIRST
     		centerSwitch();
 			break;
+    	case "center scale":
+    		scaleCenter();
+    		break;
     	case "left": // LEFT AUTON SCALE FIRST
-    		//scaleFirst();
-    		tournamentWinner();
+    		scaleSides();
     		break;
     	case "right": // RIGHT AUTON SCALE FIRST
-    		scaleFirst();
-    		//tournamentWinner();
+    		scaleSides();
     		break;
     	case "debug": // DEBUG AUTO
 			diagnosticTest();
 			break;
     	case "test":
-    		//swingTest();
-    		straightTest();
+    		swingTest();
+    		//straightTest();
+    		//turnTest();
     		break;
 		default: // NO AUTON
 			break;
@@ -227,7 +228,7 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
         		m_DriveTrain.disableSwingPID();
-        		m_DriveTrain./*DriveDistance*/DriveControlledAngle(12*4.5, 4, 5, 30);
+        		m_DriveTrain./*DriveDistance*/DriveControlledAngle(12*4.5, 8, 5, 30);
     			
     			autonomousCase++;
     		}
@@ -370,12 +371,12 @@ public class Robot extends IterativeRobot
     	}
     }
     
-    public void scaleFirst()
+    public void scaleSides()
     {
     	switch(autonomousCase)
     	{
     	case 0: // Path our routine
-    		if(scaleChar == startPosition.charAt(0))
+    		if(scaleChar == autonRoutine.toUpperCase().charAt(0))
 				autonomousCase++; // ******Straight ahead
 			else
 	    		autonomousCase = 2;// Cross the field
@@ -439,6 +440,58 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.DisablePIDControl();
     			// Shoot onto scale plate
     		}
+    	}
+    }
+    
+    public void scaleCenter()
+    {
+    	switch(autonomousCase)
+    	{
+    	case 0:
+    		m_DriveTrain.ResetGyro();
+    		m_DriveTrain.SetSwingParameters(45, true);
+    		m_DriveTrain.StartSwingTurn();
+    		autonomousCase++;
+    		break;
+    	case 1:
+    		if(m_DriveTrain.SwingAngleOnTarget())
+    		{
+    			m_DriveTrain.disableSwingPID();
+        		m_DriveTrain.DriveControlledAngle(7*12, 8, 5, 45);
+        		autonomousCase++;
+    		}
+    		break;
+    	case 2:
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.SetSwingParameters(0, false);
+    			m_DriveTrain.StartSwingTurn();
+    			autonomousCase++;
+    		}
+    		break;
+    	case 3:
+    		if(m_DriveTrain.SwingAngleOnTarget())
+    		{
+    			m_DriveTrain.disableSwingPID();
+    			m_DriveTrain.DriveControlledAngle(5*12, 8, 5, 0);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 4:
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.SetSwingParameters(30, false);
+    			m_DriveTrain.StartSwingTurn();
+    		}
+    		break;
+    	case 5:
+    		if(m_DriveTrain.SwingAngleOnTarget())
+    		{
+    			m_DriveTrain.disableSwingPID();
+    		}
+    		break;
     	}
     }
     

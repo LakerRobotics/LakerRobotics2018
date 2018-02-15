@@ -25,6 +25,8 @@ public class MotionControlHelper {
     double m_initialMeasuredDistance  = 0.0d;
  
    	public double percentDeadZoneOverride = 0.5;//enter portion of 1 (e.g. .1 for 10%)
+   	
+   	private final double RAMP_MULTIPLIER = 4.0;
    
 	PIDOutput m_output;
 	PIDSource m_source;
@@ -86,7 +88,7 @@ public class MotionControlHelper {
        
        // get the motors going in the right direction
        double gapEnd = m_targetDistance-currentMeasuredDistance;
-       double rampDown = m_rampUpRampDownDistance * 6;
+       double rampDown = m_rampUpRampDownDistance * RAMP_MULTIPLIER;
        if(gapEnd == 0) 
        {
     	   targetSpeed = 0;
