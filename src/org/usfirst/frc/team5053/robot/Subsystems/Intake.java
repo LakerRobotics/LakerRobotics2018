@@ -1,16 +1,18 @@
 package org.usfirst.frc.team5053.robot.Subsystems;
 
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
 import edu.wpi.first.wpilibj.Talon;
 
 public class Intake implements Subsystem {
 
-	private Talon m_LeftIntake;
-	private Talon m_RightIntake;
+	private WPI_TalonSRX m_LeftIntake;
+	private WPI_TalonSRX m_RightIntake;
 	
 	
 	
-	public Intake(Talon leftTalon, Talon rightTalon)
+	public Intake(WPI_TalonSRX leftTalon, WPI_TalonSRX rightTalon)
 	{
 		m_LeftIntake = leftTalon;
 		m_RightIntake = rightTalon;

@@ -2,8 +2,14 @@ package org.usfirst.frc.team5053.robot.Subsystems;
 
 import java.util.HashMap;
 
+import org.usfirst.frc.team5053.robot.RobotSensorMap;
 import org.usfirst.frc.team5053.robot.Subsystems.Utilities.AnglePIDWrapper;
 import org.usfirst.frc.team5053.robot.Subsystems.Utilities.MotionController;
+import org.usfirst.frc.team5053.robot.Subsystems.Utilities.TalonSRXWrapper;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Encoder;
@@ -24,10 +30,13 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	 * Hello There! : I'm the base constructor.
 	 */
 
-	private Encoder m_LeftEncoder;
-	private Encoder m_RightEncoder;
+	//private Encoder m_LeftEncoder;
+	//private Encoder m_RightEncoder;
 	
 	private MotionController m_MotionController;
+	private WPI_TalonSRX m_rightTalon;
+	private WPI_TalonSRX m_leftTalon;
+	private TalonSRXWrapper m_talonWrapper;
 	
 	private ADXRS450_Gyro m_Gyro;
 	
@@ -39,18 +48,29 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	private double m_Speed = 0.0;
 	private double m_Turn = 0.0;
 	
-	public DriveTrainMotionControl(SpeedControllerGroup leftMotorGroup, SpeedControllerGroup rightMotorGroup, Encoder leftEncoder, Encoder rightEncoder, ADXRS450_Gyro gyro)
+	private final int kPidId = 0;
+	private final int kTimeOutMs = 0;
+	
+	public DriveTrainMotionControl(WPI_TalonSRX leftTalon, WPI_TalonSRX rightTalon, ADXRS450_Gyro gyro)
 	{
-		super(leftMotorGroup, rightMotorGroup);
+		super(leftTalon, rightTalon);
+		m_leftTalon = leftTalon;
+		m_leftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, kPidId,
+				kTimeOutMs);
+		
+		m_rightTalon = rightTalon;
+		m_rightTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, kPidId,
+				kTimeOutMs);
 		
 		//m_DriveTrain = new DriveTrain(leftMotorGroup, rightMotorGroup, leftEncoder, rightEncoder, gyro);
 		
-		m_LeftEncoder = leftEncoder;
-		m_RightEncoder = rightEncoder;
+		//m_LeftEncoder = leftEncoder;
+		//m_RightEncoder = rightEncoder;
+		m_talonWrapper = new TalonSRXWrapper(leftTalon);
 		
 		m_Gyro = gyro;
 		
-		m_MotionController = new MotionController(this, (PIDSource) m_RightEncoder, (PIDSource) m_Gyro);
+		m_MotionController = new MotionController(this, m_talonWrapper, (PIDSource) m_Gyro);
 		
 		m_AnglePIDWrapper = new AnglePIDWrapper(this);
 		m_AnglePID = new PIDController(0.1, 0.0, 0.0, m_AnglePIDWrapper, m_AnglePIDWrapper);
@@ -148,24 +168,25 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	}
 	public double GetRightDistance()
 	{
-		return m_RightEncoder.getDistance();
+		//return m_RightEncoder.getDistance();
+		return m_rightTalon.getSelectedSensorPosition(0);
 	}
 	public double GetRightSpeed()
 	{
-		return m_RightEncoder.getRate();
+		return m_rightTalon.getSelectedSensorVelocity(0);
 	}
 	public double GetLeftDistance()
 	{
-		return m_LeftEncoder.getDistance();
+		return m_leftTalon.getSelectedSensorPosition(0);
 	}
 	public double GetLeftSpeed()
 	{
-		return m_LeftEncoder.getRate();
+		return m_leftTalon.getSelectedSensorVelocity(0);
 	}
 	public void ResetEncoders()
 	{
-		m_LeftEncoder.reset();
-		m_RightEncoder.reset();
+		//m_LeftEncoder.reset();
+		//m_RightEncoder.reset();
 	}
 	public void ResetGyro() 
 	{
@@ -206,11 +227,14 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	{
 		SmartDashboard.putNumber("Gyro Angle", m_Gyro.getAngle());
 		SmartDashboard.putNumber("Gyro Rate", m_Gyro.getRate());
-		SmartDashboard.putNumber("LeftDriveEncoder Rate", m_LeftEncoder.getRate());
-		
+		//SmartDashboard.putNumber("LeftDriveEncoder Rate", m_LeftEncoder.getRate());
+		SmartDashboard.putNumber("LeftDrive Rate", m_leftTalon.getSelectedSensorVelocity(0));
+		SmartDashboard.putNumber("LeftDrive Distance", m_leftTalon.getSelectedSensorPosition(0));
+		SmartDashboard.putNumber("RightDrive Rate", m_rightTalon.getSelectedSensorVelocity(0));
+		SmartDashboard.putNumber("RightDrive Distance", m_rightTalon.getSelectedSensorPosition(0));
 		// Do not change these names they are used for the DS Dashboard
-		SmartDashboard.putNumber("leftDriveEncoder", m_LeftEncoder.getDistance());
-		SmartDashboard.putNumber("rightDriveEncoder", m_RightEncoder.getDistance());
+		//SmartDashboard.putNumber("leftDriveEncoder", m_LeftEncoder.getDistance());
+		//SmartDashboard.putNumber("rightDriveEncoder", m_RightEncoder.getDistance());
 	}
 
 }

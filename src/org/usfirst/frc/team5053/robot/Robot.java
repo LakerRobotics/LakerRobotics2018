@@ -118,8 +118,8 @@ public class Robot extends IterativeRobot
     	m_RobotSensors = new RobotSensorMap();    	
     	
     	//Robot Subsystem Initialization
-    	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
+    	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDrive(), m_RobotControllers.getRightDrive(), m_RobotSensors.getGyro());
+    	m_Elevator = new Elevator(m_RobotControllers.getElevator());
     	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake());
     	m_ThePult = new Catapult(m_RobotControllers.getCatapult());
     	// Scaler

@@ -4,6 +4,8 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Talon;
 import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 /**
  * Maps all of the output controllers on the robot.
@@ -29,18 +31,15 @@ public class RobotControllerMap
 	private final int catapultSolenoidSlot = 0;
 	
 
-	private Talon m_LeftDrive1;
-	private Talon m_LeftDrive2;
-	private Talon m_RightDrive1;
-	private Talon m_RightDrive2;
-	private Talon m_Elevator;
-	private Talon m_Intake1;
-	private Talon m_Intake2;
+	private WPI_TalonSRX m_LeftDrive;
+	private WPI_TalonSRX m_LeftDriveSlave;
+	private WPI_TalonSRX m_RightDrive;
+	private WPI_TalonSRX m_RightDriveSlave;
+	private WPI_TalonSRX m_Elevator;
+	private WPI_TalonSRX m_Intake1;
+	private WPI_TalonSRX m_Intake2;
 	
 	private Solenoid m_Catapult;
-	
-	private SpeedControllerGroup m_LeftDrive;
-	private SpeedControllerGroup m_RightDrive;
 	
 	/**
 	 * 
@@ -49,39 +48,36 @@ public class RobotControllerMap
 	public RobotControllerMap()
 	{
 		
-		m_LeftDrive1 = new Talon(leftDrive1PWM);
-		m_LeftDrive2 = new Talon(leftDrive2PWM);
-		m_LeftDrive = new SpeedControllerGroup(m_LeftDrive1, m_LeftDrive2);
+		m_LeftDrive = new WPI_TalonSRX(leftDrive1PWM);
+		m_LeftDriveSlave = new WPI_TalonSRX(leftDrive2PWM);
+		m_LeftDriveSlave.follow(m_LeftDrive);
 		m_LeftDrive.setInverted(true);
 		
-		m_RightDrive1 = new Talon(rightDrive1PWM);
-		m_RightDrive2 = new Talon(rightDrive2PWM);
-		m_RightDrive = new SpeedControllerGroup(m_RightDrive1, m_RightDrive2);
+		m_RightDrive = new WPI_TalonSRX(rightDrive1PWM);
+		m_RightDriveSlave = new WPI_TalonSRX(rightDrive2PWM);
+		m_RightDriveSlave.follow(m_RightDrive);
 		m_RightDrive.setInverted(true);
 		
-		m_Elevator = new Talon(elevatorPWM);
+		m_Elevator = new WPI_TalonSRX(elevatorPWM);
 		
-		m_Intake1 = new Talon(intakeLeftPWM);
-		m_Intake2 = new Talon(intakeRightPWM);
+		m_Intake1 = new WPI_TalonSRX(intakeLeftPWM);
+		m_Intake2 = new WPI_TalonSRX(intakeRightPWM);
 		
 		m_Catapult = new Solenoid(catapultSolenoidSlot);
 	}
-	
-	public SpeedControllerGroup getLeftDriveGroup()
-	{
+	public WPI_TalonSRX getLeftDrive() {
 		return m_LeftDrive;
 	}
-	public SpeedControllerGroup getRightDriveGroup()
-	{
+	public WPI_TalonSRX getRightDrive() {
 		return m_RightDrive;
 	}
-	public Talon getElevator() {
+	public WPI_TalonSRX getElevator() {
 		return m_Elevator;
 	}
-	public Talon getLeftIntake() {
+	public WPI_TalonSRX getLeftIntake() {
 		return m_Intake1;
 	}
-	public Talon getRightIntake() {
+	public WPI_TalonSRX getRightIntake() {
 		return m_Intake2;
 	}
 	public Solenoid getCatapult() {
