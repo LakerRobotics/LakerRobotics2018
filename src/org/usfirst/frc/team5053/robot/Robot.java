@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * Left Stick - Pitch
  * Right Stick - Yaw
  * Left Trigger - 70% Speed
- * Right Trigger - 
+ * Right Trigger - Fire Catapult (If armed)
  * Left Bumper - 100% Speed
  * Right Bumper -
  * Select -
@@ -36,18 +36,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * 
  * 
  * Operator Controls
- * Left Stick - Manual Elevator Height
- * Right Stick - Rotate Cube?
- * Left Trigger - Fire Catapult (If armed)
- * Right Trigger - Release Cube
- * Left Bumper -
- * Right Bumper - Intake Cube
- * Select -
- * Start -
- * A - Elevator to Floor Pickup
- * B - Elevator to Transfer
- * X - Elevator to Switch High
- * Y - Elevator to Switch Low
+ * Joystick Y - Manual Elevator Height
+ * Button 3 - Intake Cube
+ * Button 4 - Release Cube
+ * Button 5 - Rotate Cube Left
+ * Button 6 - Rotate Cube Right
+ * ?? - Elevator to Floor Pickup
+ * ?? - Elevator to Transfer
+ * ?? - Elevator to Switch High
+ * ?? - Elevator to Switch Low
  */
 
 public class Robot extends IterativeRobot
@@ -102,6 +99,8 @@ public class Robot extends IterativeRobot
 	private final double kTransfer = 0.0;
 	private final double kLow = 0.0;
 	private final double kHigh = 0.0;
+	
+	private double m_driveSpeed = 1.0;
 	
 	private int m_catapultDelay = 0;
 	
@@ -500,19 +499,22 @@ public class Robot extends IterativeRobot
     public void arcadeDrive()
     {
     	// Unfortunately both drive motor groups must be inverted in order for the encoders to properly read (On Lil' Geek) which is why the inputs are inverted here
-    	if(m_RobotInterface.GetDriverLeftTrigger())
+    	
+    	
+    	if(m_RobotInterface.GetDriverLeftTrigger() && !m_RobotInterface.GetDriverLeftBumper())
     	{
-    	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*0.7, -m_RobotInterface.GetDriverRightX()*0.7);
+    	 	m_driveSpeed = 0.7;
     	}
-    	else
+    	else if (!m_RobotInterface.GetDriverLeftTrigger() && m_RobotInterface.GetDriverLeftBumper())
     	{
-    	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY(), -m_RobotInterface.GetDriverRightX());
-
+    	 	m_driveSpeed = 1.0;
     	}
+    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, -m_RobotInterface.GetDriverRightX()*m_driveSpeed);
+    	
    }
     public void elevatorControl() {
     	
-    	if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
+    	/*if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
     		m_Elevator.setPosition(kFloor);
     	} else if (m_RobotInterface.GetOperatorB() && !(m_Elevator.getPositionTarget() == kTransfer)) {
     		m_Elevator.setPosition(kTransfer);
@@ -520,19 +522,20 @@ public class Robot extends IterativeRobot
     		m_Elevator.setPosition(kHigh);
     	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
     		m_Elevator.setPosition(kLow);
-    	} else if (Math.abs(m_RobotInterface.GetOperatorLeftY()) > .05) {
+    	} else */
+    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)) > .05) {
     		m_Elevator.disablePID();
-    		m_Elevator.manualControl(m_RobotInterface.GetOperatorLeftY());
+    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)*.5);
     	}
     }
     public void intakeControl() {
-    	if (m_RobotInterface.GetOperatorRightBumper() && !m_RobotInterface.GetOperatorRightTrigger()) {
+    	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) {
     		m_Intake.IntakeCube();
-    	} else if (m_RobotInterface.GetOperatorRightTrigger() && !m_RobotInterface.GetOperatorRightBumper()) {
+    	} else if (m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)) {
     		m_Intake.ReleaseCube();
-    	} else if (m_RobotInterface.GetOperatorRightX() > .25 && !m_RobotInterface.GetOperatorRightBumper() && !m_RobotInterface.GetOperatorRightTrigger()){
+    	} else if (m_RobotInterface.GetOperatorButton(6) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)){
     		m_Intake.RotateRight();
-    	} else if (m_RobotInterface.GetOperatorRightX() < -.25 && !m_RobotInterface.GetOperatorRightBumper() && !m_RobotInterface.GetOperatorRightTrigger()){
+    	} else if (m_RobotInterface.GetOperatorButton(5) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)){
     		m_Intake.RotateLeft();
     	} else {
     		m_Intake.StopIntake();
@@ -540,7 +543,9 @@ public class Robot extends IterativeRobot
     }
     public void catapultControl() {
     	
-    	if (m_RobotInterface.GetOperatorLeftTrigger() && m_catapultDelay == 0) {
+    	//Right Trigger - Fire - Start 2 second delay before rearming
+    	
+    	if (m_RobotInterface.GetDriverRightTrigger() && m_catapultDelay == 0) {
     		m_ThePult.Launch();
     		m_catapultDelay = 100;
     	} else if (m_catapultDelay <= 0) {
