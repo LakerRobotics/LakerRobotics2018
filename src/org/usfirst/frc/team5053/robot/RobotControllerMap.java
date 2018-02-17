@@ -19,13 +19,13 @@ import com.ctre.CANTalon;
 
 public class RobotControllerMap
 {
-	private final int leftDrive1PWM 	= 0;
-	private final int leftDrive2PWM 	= 1;
-	private final int rightDrive1PWM 	= 2;
-	private final int rightDrive2PWM 	= 3;
-	private final int elevatorPWM 		= 4;
-	private final int intakeLeftPWM = 5;
-	private final int intakeRightPWM = 6;
+	private final int leftDrive1PWM 	= 7;
+	private final int leftDrive2PWM 	= 8;
+	private final int rightDrive1PWM 	= 3;
+	private final int rightDrive2PWM 	= 4;
+	private final int elevatorPWM 		= 2;
+	private final int intakeLeftPWM = 0;
+	private final int intakeRightPWM = 1;
 	private final int catapultSolenoidSlot = 0;
 	
 
