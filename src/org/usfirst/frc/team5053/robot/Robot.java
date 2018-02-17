@@ -2,7 +2,10 @@ package org.usfirst.frc.team5053.robot;
 
 import org.usfirst.frc.team5053.robot.RobotInterfaceMap.JoystickType;
 import org.usfirst.frc.team5053.robot.Sensors.LidarLite;
+import org.usfirst.frc.team5053.robot.Subsystems.Catapult;
 import org.usfirst.frc.team5053.robot.Subsystems.DriveTrainMotionControl;
+import org.usfirst.frc.team5053.robot.Subsystems.Elevator;
+import org.usfirst.frc.team5053.robot.Subsystems.Intake;
 
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -13,9 +16,35 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * 
- * STEAMWORKS 2017
+ * Power Up 2018
  * Laker Robotics 
  * 
+ * 
+ * Driver Controls
+ * Left Stick - Pitch
+ * Right Stick - Yaw
+ * Left Trigger - 70% Speed
+ * Right Trigger - Fire Catapult (If armed)
+ * Left Bumper - 100% Speed
+ * Right Bumper -
+ * Select -
+ * Start -
+ * A -
+ * B -
+ * X -
+ * Y - 
+ * 
+ * 
+ * Operator Controls
+ * Joystick Y - Manual Elevator Height
+ * Button 3 - Intake Cube
+ * Button 4 - Release Cube
+ * Button 5 - Rotate Cube Left
+ * Button 6 - Rotate Cube Right
+ * ?? - Elevator to Floor Pickup
+ * ?? - Elevator to Transfer
+ * ?? - Elevator to Switch High
+ * ?? - Elevator to Switch Low
  */
 
 public class Robot extends IterativeRobot
@@ -31,10 +60,9 @@ public class Robot extends IterativeRobot
 	
 	//Robot Subsystem Declaration
 	private DriveTrainMotionControl m_DriveTrain;
-	// Elevator
-	// Intake
-	// Pneumatic Catapult
-	// Scaler
+	private Elevator m_Elevator;
+	private Intake m_Intake;
+	private Catapult m_ThePult;
 	private LidarLite m_Lidar;
 	
 	//Vision declaration
@@ -64,8 +92,17 @@ public class Robot extends IterativeRobot
 	private double[] diagnosticPowerSent;
 	private int arrIndex;
 	
-	//Misc variables
 	
+	
+	//Misc variables
+	private final double kFloor = 0.0;
+	private final double kTransfer = 0.0;
+	private final double kLow = 0.0;
+	private final double kHigh = 0.0;
+	
+	private double m_driveSpeed = 1.0;
+	
+	private int m_catapultDelay = 0;
 	
 	@Override
     public void robotInit()
@@ -81,9 +118,9 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	// Elevator
-    	// Intake
-    	// Pneumatic Catapult
+    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
+    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake());
+    	m_ThePult = new Catapult(m_RobotControllers.getCatapult());
     	// Scaler
     	
     	CameraServer server = CameraServer.getInstance();
@@ -549,6 +586,9 @@ public class Robot extends IterativeRobot
     	WriteDashboardData();
     	
     	arcadeDrive();
+    	elevatorControl();
+    	intakeControl();
+    	catapultControl();
     	
     	m_DriveTrain.WriteDashboardData();
     	
@@ -571,16 +611,65 @@ public class Robot extends IterativeRobot
     public void arcadeDrive()
     {
     	// Unfortunately both drive motor groups must be inverted in order for the encoders to properly read (On Lil' Geek) which is why the inputs are inverted here
-    	if(m_RobotInterface.GetDriverLeftTrigger())
+    	
+    	
+    	if(m_RobotInterface.GetDriverLeftTrigger() && !m_RobotInterface.GetDriverLeftBumper())
     	{
-    	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*0.7, -m_RobotInterface.GetDriverRightX()*0.7);
+    	 	m_driveSpeed = 0.7;
     	}
-    	else
+    	else if (!m_RobotInterface.GetDriverLeftTrigger() && m_RobotInterface.GetDriverLeftBumper())
     	{
-    	 	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY(), -m_RobotInterface.GetDriverRightX());
-
+    	 	m_driveSpeed = 1.0;
     	}
+    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, -m_RobotInterface.GetDriverRightX()*m_driveSpeed);
+    	
    }
+    public void elevatorControl() {
+    	
+    	/*if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
+    		m_Elevator.setPosition(kFloor);
+    	} else if (m_RobotInterface.GetOperatorB() && !(m_Elevator.getPositionTarget() == kTransfer)) {
+    		m_Elevator.setPosition(kTransfer);
+    	} else if (m_RobotInterface.GetOperatorX() && !(m_Elevator.getPositionTarget() == kHigh)) {
+    		m_Elevator.setPosition(kHigh);
+    	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
+    		m_Elevator.setPosition(kLow);
+    	} else */
+    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)) > .05) {
+    		m_Elevator.disablePID();
+    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)*.5);
+    	}
+    }
+    public void intakeControl() {
+    	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) {
+    		m_Intake.IntakeCube();
+    	} else if (m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)) {
+    		m_Intake.ReleaseCube();
+    	} else if (m_RobotInterface.GetOperatorButton(6) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)){
+    		m_Intake.RotateRight();
+    	} else if (m_RobotInterface.GetOperatorButton(5) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)){
+    		m_Intake.RotateLeft();
+    	} else {
+    		m_Intake.StopIntake();
+    	}
+    }
+    public void catapultControl() {
+    	
+    	//Right Trigger - Fire - Start 2 second delay before rearming
+    	
+    	if (m_RobotInterface.GetDriverRightTrigger() && m_catapultDelay == 0) {
+    		m_ThePult.Launch();
+    		m_catapultDelay = 100;
+    	} else if (m_catapultDelay <= 0) {
+    		m_catapultDelay = 0;
+    		m_ThePult.Arm();
+    	}
+    	
+    	if (m_catapultDelay > 0) {
+    		m_catapultDelay--;
+    	}
+    	
+    }
     
     
     public void GetDashboardData()
