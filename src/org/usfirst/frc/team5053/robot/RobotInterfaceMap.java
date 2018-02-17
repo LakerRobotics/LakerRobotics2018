@@ -59,7 +59,11 @@ public class RobotInterfaceMap
 	private int operatorLeftY = 0;
 	private int operatorLeftX = 0;
 	private int operatorRightX = 0;
+
 	private int operatorRightY = 0;
+	
+	// Start recording for record playback in auton feature (this is for proof of concept should move to custom dashboard once debugged)
+	private int recordButton = 0;
 	
 	private Joystick driverJoystick;
 	private Joystick operatorJoystick;
@@ -91,6 +95,7 @@ public class RobotInterfaceMap
 			driverRightTrigger = 3;
 			driverRightX = 4;
 			driverRightY = 5;
+			
 		}
 		else
 		{
@@ -112,6 +117,7 @@ public class RobotInterfaceMap
 			driverLeftX = 2;
 			driverRightX = 3;
 			driverRightY = 4;
+			
 		}
 		
 		if (operator.equals(JoystickType.XBOX))
@@ -134,7 +140,8 @@ public class RobotInterfaceMap
 			operatorRightTrigger = 3;
 			operatorRightX = 4;
 			operatorRightY = 5;
-			
+
+
 		}
 		else
 		{
@@ -157,7 +164,11 @@ public class RobotInterfaceMap
 			operatorRightX = 3;
 			operatorRightY = 4;
 		}	
+		
+		// Set the record button to be on the Operator controller start button
+		recordButton = operatorStartButton;
 	}
+
 
 	
 	//Driver Controller Abstraction Methods
@@ -201,5 +212,7 @@ public class RobotInterfaceMap
 	public double GetOperatorLeftY(){                  return operatorJoystick.getRawAxis(operatorLeftY);}
 	public double GetOperatorRightY(){                 return operatorJoystick.getRawAxis(operatorRightY);}
 	public Joystick GetOperatorJoystick(){             return operatorJoystick;}
+	
+	public boolean GetRecord(){                 return operatorJoystick.getRawButton(recordButton);}
 
 }

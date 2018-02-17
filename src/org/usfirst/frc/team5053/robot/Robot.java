@@ -13,6 +13,9 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import org.usfirst.frc.team5053.robot.record_playback.BTMacroRecord;
+import org.usfirst.frc.team5053.robot.record_playback.BTMacroPlay;
+
 
 /**
  * 
@@ -92,6 +95,16 @@ public class Robot extends IterativeRobot
 	private double[] diagnosticPowerSent;
 	private int arrIndex;
 	
+	// Record Playback
+	BTMacroRecord m_BTMacroRecord;
+	BTMacroPlay m_BTMacroPlay;
+	
+	boolean isRecording = false;
+	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
+	//few different auto programs
+	static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
+	//autoFile is a global constant that keeps you from recording into a different file than the one you play from
+	public static final String autoFile = new String("/home/lvuser/recordedAuto" + autoNumber + ".csv");
 	
 	
 	//Misc variables
@@ -134,6 +147,15 @@ public class Robot extends IterativeRobot
     	diagnosticRightRate = new double[202];
     	diagnosticPowerSent = new double[202];
     	arrIndex = 0;
+    	
+    	// Record Playback
+    	try{
+    		m_BTMacroRecord = new BTMacroRecord();
+			m_BTMacroPlay = new BTMacroPlay();
+		}
+		catch(Exception e){
+			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
     	
     }
 
@@ -197,6 +219,9 @@ public class Robot extends IterativeRobot
     		swingTest();
     		//straightTest();
     		//turnTest();
+    		break;
+    	case "playback":
+    		m_BTMacroPlay.play(m_RobotControllers);
     		break;
 		default: // NO AUTON
 			break;
@@ -595,10 +620,57 @@ public class Robot extends IterativeRobot
     	//Shooter methods
     	
     	//Other
+      	record4LaterPlayback();
     	
     	//Misc variable updates
     	
     }
+    
+    public void record4LaterPlayback()
+    {
+	//Record for record playback
+    	    		//the statement in this "if" checks if a button you designate as your record button 
+    		//has been pressed, and stores the fact that it has been pressed in a variable
+    		if (m_RobotInterface.GetRecord()) 
+			{
+    			isRecording = !isRecording;
+			}  
+			//if our record button has been pressed, lets start recording!
+			if (isRecording)
+			{
+   			try
+    			{
+// RGT 2018-2-17 this is done in init    				//if we succesfully have made the recorder object, lets start recording stuff
+// RGT 2018-2-17 this is done in init    				//2220 uses a storage object that we can get motors values, etc. from.
+// RGT 2018-2-17 this is done in init    				//if you don't need to pass an object like that in, modify the methods/classes
+// RGT 2018-2-17 this is done in init
+// RGT 2018-2-17 this is done in init    				if(recorder != null)
+// RGT 2018-2-17 this is done in init   				{
+    					m_BTMacroRecord.record(m_RobotControllers);
+// RGT 2018-2-17 this is done in init    				}
+// RGT 2018-2-17 this is done in init    			
+				}
+				catch (Exception e) 
+				{
+					e.printStackTrace();
+				}
+// RGT 2018-2-17 this is done in init			}
+		}
+		
+		//once we're done recording, the last thing we'll do is clean up the recording using the end
+		//function. more info on the end function is in the record class
+    	try 
+    	{
+    		if(m_BTMacroRecord != null)
+    		{
+    			m_BTMacroRecord.end();
+    		}
+		} 
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
+  }    
 
     public void testPeriodic()
     {  
