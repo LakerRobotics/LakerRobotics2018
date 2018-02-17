@@ -1,9 +1,12 @@
 package org.usfirst.frc.team5053.robot;
 
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Talon;
-import com.ctre.CANTalon;
 
 /**
  * Maps all of the output controllers on the robot.
@@ -23,21 +26,31 @@ public class RobotControllerMap
 	private final int leftDrive2PWM 	= 8;
 	private final int rightDrive1PWM 	= 3;
 	private final int rightDrive2PWM 	= 4;
-	private final int elevatorPWM 		= 2;
-	private final int intakeLeftPWM = 0;
-	private final int intakeRightPWM = 1;
-	private final int catapultSolenoidSlot = 0;
+	private final int intakeLeftPWM 	= 0;
+	private final int intakeRightPWM 	= 1;
+	
+	private final int elevatorCAN = 1;
+	
+	private final int catapultLeftExpandSolenoidSlot 	= 0;
+	private final int catapultLeftRetractSolenoidSlot 	= 1;
+	private final int catapultRightExpandSolenoidSlot 	= 2;
+	private final int catapultRightRetractSolenoidSlot 	= 3;
+	private final int intakeExpandSolenoidSlot			= 4;
+	private final int intakeRetractSolenoidSlot 		= 5;
 	
 
 	private Talon m_LeftDrive1;
 	private Talon m_LeftDrive2;
 	private Talon m_RightDrive1;
 	private Talon m_RightDrive2;
-	private Talon m_Elevator;
 	private Talon m_Intake1;
 	private Talon m_Intake2;
+
+	private TalonSRX m_Elevator;
 	
-	private Solenoid m_Catapult;
+	private DoubleSolenoid m_CatapultLeft;
+	private DoubleSolenoid m_CatapultRight;
+	private DoubleSolenoid m_IntakeSolenoid;
 	
 	private SpeedControllerGroup m_LeftDrive;
 	private SpeedControllerGroup m_RightDrive;
@@ -59,12 +72,14 @@ public class RobotControllerMap
 		m_RightDrive = new SpeedControllerGroup(m_RightDrive1, m_RightDrive2);
 		m_RightDrive.setInverted(true);
 		
-		m_Elevator = new Talon(elevatorPWM);
+		m_Elevator = new TalonSRX(elevatorCAN);
 		
 		m_Intake1 = new Talon(intakeLeftPWM);
 		m_Intake2 = new Talon(intakeRightPWM);
 		
-		m_Catapult = new Solenoid(catapultSolenoidSlot);
+		m_CatapultLeft = new DoubleSolenoid(catapultLeftExpandSolenoidSlot, catapultLeftRetractSolenoidSlot);
+		m_CatapultRight = new DoubleSolenoid(catapultRightExpandSolenoidSlot, catapultRightRetractSolenoidSlot);
+		m_IntakeSolenoid = new DoubleSolenoid(intakeExpandSolenoidSlot, intakeRetractSolenoidSlot);
 	}
 	
 	public SpeedControllerGroup getLeftDriveGroup()
@@ -75,7 +90,7 @@ public class RobotControllerMap
 	{
 		return m_RightDrive;
 	}
-	public Talon getElevator() {
+	public TalonSRX getElevator() {
 		return m_Elevator;
 	}
 	public Talon getLeftIntake() {
@@ -84,7 +99,14 @@ public class RobotControllerMap
 	public Talon getRightIntake() {
 		return m_Intake2;
 	}
-	public Solenoid getCatapult() {
-		return m_Catapult;
+	
+	public DoubleSolenoid getCatapultLeft() {
+		return m_CatapultLeft;
+	}
+	public DoubleSolenoid getCatapultRight() {
+		return m_CatapultLeft;
+	}
+	public DoubleSolenoid getIntakeSolenoid() {
+		return m_IntakeSolenoid;
 	}
 }

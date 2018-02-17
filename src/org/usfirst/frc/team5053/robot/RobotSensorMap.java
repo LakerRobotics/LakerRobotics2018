@@ -42,10 +42,10 @@ public class RobotSensorMap
 	public RobotSensorMap()
 	{
 		m_LeftDrive = new Encoder(leftDriveEncoderADIO, leftDriveEncoderBDIO);
-		m_LeftDrive.setDistancePerPulse(6*Math.PI/360); //Distance in inches
+		m_LeftDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
 		
 		m_RightDrive = new Encoder(rightDriveEncoderADIO, rightDriveEncoderBDIO);
-		m_RightDrive.setDistancePerPulse(6*Math.PI/360); //Distance in inches
+		m_RightDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
 		m_LeftDrive.setReverseDirection(true);
 		
 		m_Elevator = new Encoder(elevatorEncoderADIO, elevatorEncoderBDIO);

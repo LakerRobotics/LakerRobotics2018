@@ -1,6 +1,9 @@
 package org.usfirst.frc.team5053.robot.Subsystems;
 
 
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Talon;
 
 public class Intake implements Subsystem {
@@ -8,12 +11,14 @@ public class Intake implements Subsystem {
 	private Talon m_LeftIntake;
 	private Talon m_RightIntake;
 	
+	private DoubleSolenoid m_Solenoid;
 	
-	
-	public Intake(Talon leftTalon, Talon rightTalon)
+	public Intake(Talon leftTalon, Talon rightTalon, DoubleSolenoid solenoid)
 	{
 		m_LeftIntake = leftTalon;
 		m_RightIntake = rightTalon;
+		
+		m_Solenoid = solenoid;
 		
 	}
 	public void IntakeCube() {
@@ -35,6 +40,21 @@ public class Intake implements Subsystem {
 	public void StopIntake() {
 		m_LeftIntake.set(0.0);
 		m_RightIntake.set(0.0);
+	}
+	
+	public boolean getSolenoidState()
+	{
+		Value state = m_Solenoid.get();
+		
+		return state.equals(Value.kForward);
+	}
+	public void expandIntake()
+	{
+		m_Solenoid.set(Value.kForward);
+	}
+	public void retractIntake()
+	{
+		m_Solenoid.set(Value.kReverse);
 	}
 	
 	@Override

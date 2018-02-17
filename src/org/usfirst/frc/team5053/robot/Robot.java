@@ -8,6 +8,7 @@ import org.usfirst.frc.team5053.robot.Subsystems.Elevator;
 import org.usfirst.frc.team5053.robot.Subsystems.Intake;
 
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
@@ -64,6 +65,7 @@ public class Robot extends IterativeRobot
 	private Intake m_Intake;
 	private Catapult m_ThePult;
 	private LidarLite m_Lidar;
+	private Compressor m_Compressor;
 	
 	//Vision declaration
 	
@@ -118,14 +120,19 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
-    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake());
-    	m_ThePult = new Catapult(m_RobotControllers.getCatapult());
+    	m_Elevator = new Elevator(m_RobotControllers.getElevator());
+    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
+    	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
     	// Scaler
     	
     	CameraServer server = CameraServer.getInstance();
     	//server.setQuality(50);
     	server.startAutomaticCapture();
+    	
+    	m_Compressor = new Compressor(0);
+
+    	//m_Compressor.start();
+    	m_Compressor.setClosedLoopControl(true);
     	
     	// Diagnostic variable initialization
     	//m_NetworkTable =  NetworkTable.getTable("SmartDashboard");
@@ -149,7 +156,7 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	autonRoutine = SmartDashboard.getString("Auton Routine", "Center Scale");		// Start position of the robot from our side of the field
+    	autonRoutine = SmartDashboard.getString("Auton Routine", "test");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Part", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -194,8 +201,8 @@ public class Robot extends IterativeRobot
 			diagnosticTest();
 			break;
     	case "test":
-    		swingTest();
-    		//straightTest();
+    		//swingTest();
+    		straightTest();
     		//turnTest();
     		break;
 		default: // NO AUTON
@@ -234,7 +241,7 @@ public class Robot extends IterativeRobot
     	switch(autonomousCase)
     	{
     	case 0:
-    		m_DriveTrain.DriveDistance(60, 10, 8);
+    		m_DriveTrain.DriveDistance(120, 10, 20);
     		autonomousCase++;
     		break;
     	case 1:
@@ -482,11 +489,20 @@ public class Robot extends IterativeRobot
     
     public void scaleCenter()
     {
+    	//Scale R = -1
+    	//Scale L = 1
+    	//Switch R = 1
+    	//Switch L = -1
     	switch(autonomousCase)
     	{
     	case 0:
     		m_DriveTrain.ResetGyro();
-    		m_DriveTrain.SetSwingParameters(45, true);
+    		if (scaleTurn == -1) {
+    			m_DriveTrain.SetSwingParameters(45, false);
+    		} else {
+    			m_DriveTrain.SetSwingParameters(-45, true);
+    		}
+    		
     		m_DriveTrain.StartSwingTurn();
     		autonomousCase++;
     		break;
@@ -494,7 +510,9 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-        		m_DriveTrain.DriveControlledAngle(7*12, 8, 5, 45);
+    			
+        		m_DriveTrain.DriveControlledAngle(-7*12, 8, 5, 45*(-scaleTurn));
+        		
         		autonomousCase++;
     		}
     		break;
@@ -502,7 +520,12 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			m_DriveTrain.SetSwingParameters(0, false);
+    			if (scaleTurn == -1) {
+    				m_DriveTrain.SetSwingParameters(0, true);
+    			} else {
+    				m_DriveTrain.SetSwingParameters(0, false);
+    			}
+    			
     			m_DriveTrain.StartSwingTurn();
     			autonomousCase++;
     		}
@@ -511,7 +534,7 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_DriveTrain.DriveControlledAngle(5*12, 8, 5, 0);
+    			m_DriveTrain.DriveControlledAngle(-5*12, 6, 8, 0);
     			autonomousCase++;
     		}
     		break;
@@ -519,7 +542,12 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			m_DriveTrain.SetSwingParameters(30, false);
+    			
+    			if (scaleTurn == -1) {
+    				m_DriveTrain.SetSwingParameters(-30, true);
+    			} else {
+    				m_DriveTrain.SetSwingParameters(30, false);
+    			}
     			m_DriveTrain.StartSwingTurn();
     		}
     		break;
@@ -527,9 +555,91 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
+    			autonomousCase++;
     		}
     		break;
+    	case 6:
+    		if(true)
+    		{
+    			m_DriveTrain.disableSwingPID();
+    			autonomousCase = 99;
+    		} else {
+    			
+    			if (scaleTurn == -1) {
+    				if (switchTurn == 1) {
+    					m_DriveTrain.SetSwingParameters(45, true);
+    				} else {
+    					m_DriveTrain.SetSwingParameters(120, true);
+    				}
+    				
+    			} else {
+    				if (switchTurn == -1) {
+    					m_DriveTrain.SetSwingParameters(-45, false);
+    				} else {
+    					m_DriveTrain.SetSwingParameters(-120, false);
+    				}
+    			}
+    			m_DriveTrain.StartSwingTurn();
+    			autonomousCase++;
+    			break;
+    		}
+    		break;
+    	case 7:
+    		if (m_DriveTrain.SwingAngleOnTarget()) {
+    			m_DriveTrain.DisablePIDControl();
+    			if (scaleTurn == -1) {
+    				if (switchTurn == 1) {
+    					m_DriveTrain.DriveControlledAngle(3 * 12, 5, 4, 45);
+    				} else {
+    					m_DriveTrain.DriveControlledAngle(8 * 12, 5, 10, 120);
+    				}
+    				
+    			} else {
+    				if (switchTurn == -1) {
+    					m_DriveTrain.DriveControlledAngle(3 * 12, 5, 4, -45);
+    				} else {
+    					m_DriveTrain.DriveControlledAngle(8 * 12, 5, 10, -120);
+    				}
+    			}
+    			
+    			autonomousCase++;
+    		}
+    		break;
+    		
+    	case 8:
+    		if (m_DriveTrain.isStraightPIDFinished()) {
+    			m_DriveTrain.DisablePIDControl();
+    			if (scaleTurn == -1) {
+    				m_DriveTrain.SetSwingParameters(0, false);
+    			} else {
+    				m_DriveTrain.SetSwingParameters(0, true);
+    			}
+    			m_DriveTrain.StartSwingTurn();
+    			
+    			autonomousCase++;
+    		}
+    		break;
+    	case 9:
+    		if (m_DriveTrain.SwingAngleOnTarget()) {
+    			m_DriveTrain.disableSwingPID();
+    			m_DriveTrain.DisablePIDControl();
+    			autonomousCase++;
+    		}
+    		break;
+    	case 10:
+    		m_DriveTrain.disableSwingPID();
+			m_DriveTrain.DisablePIDControl();
+    		m_DriveTrain.arcadeDrive(0, 0);
+    		break;
+    		
+    	case 99:
+    		m_DriveTrain.disableSwingPID();
+    		m_DriveTrain.DisablePIDControl();
+    		m_DriveTrain.arcadeDrive(0, 0);
+    		break;
+    	
     	}
+    	
     }
     
     // Used solely to test the second portion of the scale first auton
@@ -574,7 +684,7 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during operator control
          */
-    	
+    	m_Compressor.setClosedLoopControl(true);
     	// For quick testing reset
     	if(autonomousCase != 0)
     	{
@@ -621,7 +731,7 @@ public class Robot extends IterativeRobot
     	{
     	 	m_driveSpeed = 1.0;
     	}
-    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, -m_RobotInterface.GetDriverRightX()*m_driveSpeed);
+    	m_DriveTrain.ArcadeDrive(m_RobotInterface.GetDriverLeftY()*m_driveSpeed, -m_RobotInterface.GetDriverRightX()*m_driveSpeed);
     	
    }
     public void elevatorControl() {
@@ -634,10 +744,13 @@ public class Robot extends IterativeRobot
     		m_Elevator.setPosition(kHigh);
     	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
     		m_Elevator.setPosition(kLow);
+    		
     	} else */
-    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)) > .05) {
-    		m_Elevator.disablePID();
-    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)*.5);
+    	
+    	m_Elevator.manualControl(.25);
+    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) {
+    		//m_Elevator.disablePID();
+    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)*.5);
     	}
     }
     public void intakeControl() {
@@ -651,6 +764,16 @@ public class Robot extends IterativeRobot
     		m_Intake.RotateLeft();
     	} else {
     		m_Intake.StopIntake();
+    	}
+    	
+    	
+    	if(m_RobotInterface.GetOperatorButton(0) && m_Intake.getSolenoidState())
+    	{
+    		m_Intake.retractIntake();
+    	}
+    	else if(!m_RobotInterface.GetOperatorButton(0) && !m_Intake.getSolenoidState())
+    	{
+    		m_Intake.expandIntake();
     	}
     }
     public void catapultControl() {

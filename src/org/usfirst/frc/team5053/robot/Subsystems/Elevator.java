@@ -1,5 +1,10 @@
 package org.usfirst.frc.team5053.robot.Subsystems;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.PIDController;
@@ -7,8 +12,7 @@ import edu.wpi.first.wpilibj.Talon;
 
 public class Elevator implements Subsystem {
 
-	private Talon m_Talon;
-	private Encoder m_Encoder;
+	private TalonSRX m_Talon;
 	private DigitalInput m_LimitTop;
 	private DigitalInput m_LimitBottom;
 	
@@ -20,37 +24,41 @@ public class Elevator implements Subsystem {
 	
 	
 	
-	public Elevator(Talon speedController, Encoder encoder/*, DigitalInput limitTop, DigitalInput limitBottom*/)
+	public Elevator(TalonSRX speedController/*, DigitalInput limitTop, DigitalInput limitBottom*/)
 	{
 		m_Talon = speedController;
+		
+		//m_Talon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 4000);
+		
 		
 		//m_LimitTop = limitTop;
 		//m_LimitBottom = limitBottom;
 		
-		m_PID = new PIDController(kp, ki, kd, m_Encoder, m_Talon);
+		//m_PID = new PIDController(kp, ki, kd, m_Encoder, m_Talon);
 	}
 	public void manualControl(double speed)
 	{
 		// Runs at half speed for manual control
-		m_Talon.setSpeed(.5*speed);
+		m_Talon.set(ControlMode.PercentOutput, speed);
+		System.out.println(m_Talon.getDeviceID() + " " + speed);
 	}
 	
 	public void setPosition(double position)
 	{
-		m_PID.setSetpoint(position);
 		m_PositionTarget = position;
-		m_PID.enable();
+		//m_Talon.set(ControlMode.Position, position);
 	}
 	
 	public void disablePID()
 	{
-		if(m_PID.isEnabled())
-			m_PID.disable();
+		//m_Talon.disable();
+		//m_Talon.free();
 	}
 	
 	public boolean isPIDEnabled()
 	{
-		return m_PID.isEnabled();
+		//return m_Talon.isAlive();
+		return false;
 	}
 	public double getPositionTarget() {
 		return m_PositionTarget;
