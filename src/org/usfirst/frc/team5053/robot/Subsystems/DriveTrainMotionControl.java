@@ -43,7 +43,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	private double m_Speed = 0.0;
 	private double m_Turn = 0.0;
 	private double m_swingTurnValue = 0.0;
-	private boolean m_swingTurnLeft = false;
+	private boolean m_swingTurnRight = false;
 	private final double SWING_TOLERANCE = 1.0;
 	
 	public DriveTrainMotionControl(SpeedControllerGroup leftMotorGroup, SpeedControllerGroup rightMotorGroup, Encoder leftEncoder, Encoder rightEncoder, ADXRS450_Gyro gyro)
@@ -57,7 +57,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_Gyro = gyro;
 		
-		m_MotionController = new MotionController(this, (PIDSource) m_RightEncoder, (PIDSource) m_Gyro);
+		m_MotionController = new MotionController(this, (PIDSource) m_LeftEncoder, (PIDSource) m_Gyro);
 		
 		m_AnglePIDWrapper = new AnglePIDWrapper(this);
 		m_AnglePID = new PIDController(0.1, 0.0, 0.0, m_AnglePIDWrapper, m_AnglePIDWrapper);
@@ -228,10 +228,10 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		return false;
 		
 	}
-	public boolean SetSwingParameters(double angle, boolean isLeft) {
+	public boolean SetSwingParameters(double angle, boolean isRight) {
 		try {
 			m_SwingPID.setSetpoint(angle);
-			m_swingTurnLeft = isLeft;
+			m_swingTurnRight = isRight;
 			
 			return true;
 		} catch (Exception ex) {
@@ -244,7 +244,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		System.out.println("Swing turn speed: " + turnSpeed);
 		
-		if (m_swingTurnLeft) 
+		if (m_swingTurnRight) 
 		{
 			this.tankDrive(0, turnSpeed);
 		} 

@@ -65,14 +65,15 @@ public class RobotControllerMap
 		m_LeftDrive1 = new Talon(leftDrive1PWM);
 		m_LeftDrive2 = new Talon(leftDrive2PWM);
 		m_LeftDrive = new SpeedControllerGroup(m_LeftDrive1, m_LeftDrive2);
-		m_LeftDrive.setInverted(true);
+		m_LeftDrive.setInverted(false); // True
 		
 		m_RightDrive1 = new Talon(rightDrive1PWM);
 		m_RightDrive2 = new Talon(rightDrive2PWM);
 		m_RightDrive = new SpeedControllerGroup(m_RightDrive1, m_RightDrive2);
-		m_RightDrive.setInverted(true);
+		m_RightDrive.setInverted(false); // True
 		
 		m_Elevator = new TalonSRX(elevatorCAN);
+		m_Elevator.setInverted(true);
 		
 		m_Intake1 = new Talon(intakeLeftPWM);
 		m_Intake2 = new Talon(intakeRightPWM);
@@ -104,7 +105,7 @@ public class RobotControllerMap
 		return m_CatapultLeft;
 	}
 	public DoubleSolenoid getCatapultRight() {
-		return m_CatapultLeft;
+		return m_CatapultRight;
 	}
 	public DoubleSolenoid getIntakeSolenoid() {
 		return m_IntakeSolenoid;

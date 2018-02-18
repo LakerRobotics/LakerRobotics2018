@@ -24,10 +24,10 @@ import edu.wpi.first.wpilibj.DigitalOutput;
 public class RobotSensorMap
 {
 	
-	private final int leftDriveEncoderADIO = 0;
-	private final int leftDriveEncoderBDIO = 1;
-	private final int rightDriveEncoderADIO = 2;
-	private final int rightDriveEncoderBDIO = 3;
+	private final int leftDriveEncoderADIO = 1; //0
+	private final int leftDriveEncoderBDIO = 0; //1
+	private final int rightDriveEncoderADIO = 3; //2
+	private final int rightDriveEncoderBDIO = 2; //3
 	private final int elevatorEncoderADIO = 4;
 	private final int elevatorEncoderBDIO = 5;
 	
@@ -43,10 +43,11 @@ public class RobotSensorMap
 	{
 		m_LeftDrive = new Encoder(leftDriveEncoderADIO, leftDriveEncoderBDIO);
 		m_LeftDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
+		m_LeftDrive.setReverseDirection(true); // False
 		
 		m_RightDrive = new Encoder(rightDriveEncoderADIO, rightDriveEncoderBDIO);
 		m_RightDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
-		m_LeftDrive.setReverseDirection(true);
+		//m_RightDrive.setReverseDirection(true);
 		
 		m_Elevator = new Encoder(elevatorEncoderADIO, elevatorEncoderBDIO);
 		m_Elevator.setDistancePerPulse(1/360);

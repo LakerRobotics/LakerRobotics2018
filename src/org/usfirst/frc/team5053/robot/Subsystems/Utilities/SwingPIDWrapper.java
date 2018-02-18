@@ -32,7 +32,7 @@ public class SwingPIDWrapper implements PIDOutput, PIDSource {
 
 	@Override
 	public void pidWrite(double output) {
-		m_drivetrain.SwingTurn(output);
+		m_drivetrain.SwingTurn(-output);
 	}
 
 }
