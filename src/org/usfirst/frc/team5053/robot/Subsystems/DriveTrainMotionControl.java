@@ -65,7 +65,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_SwingPIDWrapper = new SwingPIDWrapper(this);
 		
-		m_SwingPID = new PIDController(0.05, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
+		m_SwingPID = new PIDController(0.07, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
 		m_SwingPID.setOutputRange(-0.75, 0.75);
 		m_SwingPID.setAbsoluteTolerance(SWING_TOLERANCE);
 	}

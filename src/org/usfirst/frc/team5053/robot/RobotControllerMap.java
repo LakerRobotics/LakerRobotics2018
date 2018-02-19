@@ -73,7 +73,7 @@ public class RobotControllerMap
 		m_RightDrive.setInverted(false); // True
 		
 		m_Elevator = new TalonSRX(elevatorCAN);
-		m_Elevator.setInverted(true);
+		m_Elevator.setInverted(false);
 		
 		m_Intake1 = new Talon(intakeLeftPWM);
 		m_Intake2 = new Talon(intakeRightPWM);

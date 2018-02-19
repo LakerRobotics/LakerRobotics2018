@@ -15,16 +15,22 @@ public class Elevator implements Subsystem {
 
 	private TalonSRX m_Talon;
 	
-	private final double kp = 0.0;
+	private final double kp = 0.08;
 	private final double ki = 0.0;
 	private final double kd = 0.0;
-	private double m_PositionTarget;
 	
+	private double m_PositionTarget = 1;
+	private final double TOLERANCE = 200;
 	
 	
 	public Elevator(TalonSRX speedController)
 	{
 		m_Talon = speedController;
+		
+		m_Talon.config_kP(0, kp, 4000);
+		m_Talon.config_kI(0, ki, 4000);
+		m_Talon.config_kD(0, kd, 4000);
+		
 		
 		m_Talon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 4000);
 	}
@@ -44,13 +50,21 @@ public class Elevator implements Subsystem {
 	{
 		m_Talon.set(ControlMode.PercentOutput, 0);
 	}
-	
+	public void resetEncoder()
+	{
+		m_Talon.setSelectedSensorPosition(0, 0, 4000);
+	}
 	public boolean isPIDEnabled()
 	{
 		return m_Talon.getControlMode().equals(ControlMode.Position);
 	}
-	public double getPositionTarget() {
+	public double getPositionTarget() 
+	{
 		return m_PositionTarget;
+	}
+	public boolean isPIDOnTarget()
+	{
+		return (Math.abs(getCurrentPosition()) >= (Math.abs(getPositionTarget() - TOLERANCE))); 
 	}
 	public double getCurrentPosition()
 	{
@@ -60,7 +74,8 @@ public class Elevator implements Subsystem {
 	public void WriteDashboardData() 
 	{
 		SmartDashboard.putNumber("Elevator Target", getPositionTarget());
-		SmartDashboard.putNumber("Elevator Encoder", getCurrentPosition());
+		SmartDashboard.putNumber("Elevator Encoder Position", getCurrentPosition());
+		SmartDashboard.putString("SRX State", m_Talon.getControlMode().toString());
 	}
 
 }
