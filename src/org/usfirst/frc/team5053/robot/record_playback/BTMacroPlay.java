@@ -69,7 +69,6 @@ public class BTMacroPlay {
 				//it is extremely important to set the motors in the SAME ORDER as was recorded in BTMacroRecord
 				//otherwise, motor values will be sent to the wrong motors and the robot will be unpredicatable
 				
-				
 				//drive motors
 				theRobotControllerMap.getLeftDriveGroup().set(scanner.nextDouble());
 				theRobotControllerMap.getRightDriveGroup().set(scanner.nextDouble());
@@ -86,7 +85,7 @@ public class BTMacroPlay {
 				 */ 
 				
 				//this records a true/false value from a piston
-				theRobotControllerMap.getCatapult().set(scanner.nextBoolean() );
+//				theRobotControllerMap.getCatapult().set(scanner.nextBoolean() );
 
 /*				storage.robot.getFrontLeftMotor().setX(scanner.nextDouble());
 				storage.robot.getFrontRightMotor().setX(scanner.nextDouble());
@@ -144,7 +143,7 @@ public class BTMacroPlay {
 		 */ 
 		
 		//this records a true/false value from a piston
-		theRobotControllerMap.getCatapult().set(false);
+//		theRobotControllerMap.getCatapult().set(false);
 
 		/*		storage.robot.getFrontLeftMotor().setX(0);
 		storage.robot.getBackLeftMotor().setX(0);
