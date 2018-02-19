@@ -63,7 +63,7 @@ public class Robot extends IterativeRobot
 	
 	//Robot Subsystem Declaration
 	private DriveTrainMotionControl m_DriveTrain;
-	private Elevator m_Elevator;
+//	private Elevator m_Elevator;
 	private Intake m_Intake;
 	private Catapult m_ThePult;
 	private LidarLite m_Lidar;
@@ -102,9 +102,9 @@ public class Robot extends IterativeRobot
 	boolean isRecording = false;
 	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
 	//few different auto programs
-	static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
-	//autoFile is a global constant that keeps you from recording into a different file than the one you play from
-	public static final String autoFile = new String("/home/lvuser/recordedAuto" + autoNumber + ".csv");
+		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
+		//autoFile is a global constant that keeps you from recording into a different file than the one you play from
+		public static final String autoFile = new String("/home/lvuser/recordedAuto" + autoNumber + ".csv");
 	
 	
 	//Misc variables
@@ -131,7 +131,7 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
+//    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
     	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake());
     	m_ThePult = new Catapult(m_RobotControllers.getCatapult());
     	// Scaler
@@ -611,7 +611,7 @@ public class Robot extends IterativeRobot
     	WriteDashboardData();
     	
     	arcadeDrive();
-    	elevatorControl();
+//    	elevatorControl();
     	intakeControl();
     	catapultControl();
     	
@@ -629,34 +629,28 @@ public class Robot extends IterativeRobot
     public void record4LaterPlayback()
     {
 	//Record for record playback
-    	    		//the statement in this "if" checks if a button you designate as your record button 
-    		//has been pressed, and stores the fact that it has been pressed in a variable
-    		if (m_RobotInterface.GetRecord()) 
+    	//the statement in this "if" checks if a button you designate as your record button 
+    	//has been pressed, and stores the fact that it has been pressed in a variable
+    	if (m_RobotInterface.GetRecord()) 
+		{
+    		isRecording = true;
+		}  
+		//if our record button has been pressed, lets start recording!
+		if (isRecording)
+		{
+   		try
+    		{
+    			m_BTMacroRecord.record(m_RobotControllers);
+			}
+			catch (Exception e) 
 			{
-    			isRecording = !isRecording;
-			}  
-			//if our record button has been pressed, lets start recording!
-			if (isRecording)
-			{
-   			try
-    			{
-// RGT 2018-2-17 this is done in init    				//if we succesfully have made the recorder object, lets start recording stuff
-// RGT 2018-2-17 this is done in init    				//2220 uses a storage object that we can get motors values, etc. from.
-// RGT 2018-2-17 this is done in init    				//if you don't need to pass an object like that in, modify the methods/classes
-// RGT 2018-2-17 this is done in init
-// RGT 2018-2-17 this is done in init    				if(recorder != null)
-// RGT 2018-2-17 this is done in init   				{
-    					m_BTMacroRecord.record(m_RobotControllers);
-// RGT 2018-2-17 this is done in init    				}
-// RGT 2018-2-17 this is done in init    			
-				}
-				catch (Exception e) 
-				{
-					e.printStackTrace();
-				}
-// RGT 2018-2-17 this is done in init			}
+				e.printStackTrace();
+			}
 		}
 		
+  }    
+    
+public void disabledInit(){
 		//once we're done recording, the last thing we'll do is clean up the recording using the end
 		//function. more info on the end function is in the record class
     	try 
@@ -670,7 +664,8 @@ public class Robot extends IterativeRobot
 		{
 			e.printStackTrace();
 		}
-  }    
+    	
+    }
 
     public void testPeriodic()
     {  
@@ -696,22 +691,22 @@ public class Robot extends IterativeRobot
     	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, -m_RobotInterface.GetDriverRightX()*m_driveSpeed);
     	
    }
-    public void elevatorControl() {
-    	
-    	/*if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
-    		m_Elevator.setPosition(kFloor);
-    	} else if (m_RobotInterface.GetOperatorB() && !(m_Elevator.getPositionTarget() == kTransfer)) {
-    		m_Elevator.setPosition(kTransfer);
-    	} else if (m_RobotInterface.GetOperatorX() && !(m_Elevator.getPositionTarget() == kHigh)) {
-    		m_Elevator.setPosition(kHigh);
-    	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
-    		m_Elevator.setPosition(kLow);
-    	} else */
-    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)) > .05) {
-    		m_Elevator.disablePID();
-    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)*.5);
-    	}
-    }
+//    public void elevatorControl() {
+//    	
+//    	/*if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
+//    		m_Elevator.setPosition(kFloor);
+//    	} else if (m_RobotInterface.GetOperatorB() && !(m_Elevator.getPositionTarget() == kTransfer)) {
+//    		m_Elevator.setPosition(kTransfer);
+//    	} else if (m_RobotInterface.GetOperatorX() && !(m_Elevator.getPositionTarget() == kHigh)) {
+//    		m_Elevator.setPosition(kHigh);
+//    	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
+//    		m_Elevator.setPosition(kLow);
+//    	} else */
+//    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)) > .05) {
+//    		m_Elevator.disablePID();
+//    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)*.5);
+//   	}
+//    }
     public void intakeControl() {
     	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) {
     		m_Intake.IntakeCube();

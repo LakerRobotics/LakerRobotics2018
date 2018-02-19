@@ -45,6 +45,17 @@ public class BTMacroRecord {
 	{
 		if(writer != null)
 		{
+			System.out.print(""+(System.currentTimeMillis()-startTime)
+			//drive motors		
+			+"," + theRobotControllerMap.getLeftDriveGroup().get()
+			+"," + theRobotControllerMap.getRightDriveGroup().get()
+			//intake motors
+			+"," + theRobotControllerMap.getLeftIntake().get()
+			+"," + theRobotControllerMap.getRightIntake().get()
+			//Elevator motor
+			+"," + theRobotControllerMap.getElevator().get()
+			+ "\n"
+					);
 		//start each "frame" with the elapsed time since we started recording
 		writer.append("" + (System.currentTimeMillis()-startTime));
 		
@@ -67,8 +78,9 @@ public class BTMacroRecord {
 		 */ 
 		
 		//this records a true/false value from a piston
-		writer.append("," + theRobotControllerMap.getCatapult().get() + "\n");
-		
+//		writer.append("," + theRobotControllerMap.getCatapult().get() + "\n");
+		writer.append( "\n");
+			
 		//writer.append("," + storage.robot.getToteClamp().isExtended() + "\n");
 		
 		/*
