@@ -23,7 +23,7 @@ import org.usfirst.frc.team5053.robot.Robot;
 
 public class BTMacroPlay {
 	Scanner scanner;
-	long startTime;
+	long startTime; 
 
 	boolean onTime = true;
 	double nextDouble;
