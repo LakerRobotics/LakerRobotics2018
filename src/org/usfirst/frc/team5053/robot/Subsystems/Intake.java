@@ -41,6 +41,10 @@ public class Intake implements Subsystem {
 		m_LeftIntake.set(0.0);
 		m_RightIntake.set(0.0);
 	}
+	public void AdjustableSpeed(double speed) {
+		m_LeftIntake.set(speed);
+		m_RightIntake.set(-speed);
+	}
 	
 	public boolean getSolenoidState()
 	{

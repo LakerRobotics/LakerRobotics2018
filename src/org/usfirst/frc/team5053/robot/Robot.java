@@ -101,7 +101,7 @@ public class Robot extends IterativeRobot
 	//Misc variables
 	// TODO MUST BE INVERTED the SRX encoder is wired incorrectly and we can't invert only the encoder 
 	private final double kFloor = 0.0;
-	private final double kTransfer = -13290.0;
+	private final double kTransfer = -10000.0; //-13290.0
 	private final double kLow = 0.0;
 	private final double kHigh = -19569.0;
 	
@@ -908,6 +908,7 @@ public class Robot extends IterativeRobot
     	arcadeDrive();
     	elevatorControl();
     	intakeControl();
+    	catapultControl();
     	
     	// Other
     	
@@ -952,19 +953,21 @@ public class Robot extends IterativeRobot
     	{
     		m_Elevator.setPosition(kTransfer);
     	} 
-    	else if (m_RobotInterface.GetOperatorButton(9) && !(m_Elevator.getPositionTarget() == kHigh)) 
-    	{
-    		m_Elevator.setPosition(kHigh);
-    	} 
-    	else if (m_RobotInterface.GetOperatorButton(10) && !(m_Elevator.getPositionTarget() == kLow)) 
-    	{
-    		m_Elevator.setPosition(kLow);
-    	} 
-    	else if (!m_Elevator.isPIDEnabled() && Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
+    	//else if (m_RobotInterface.GetOperatorButton(9) && !(m_Elevator.getPositionTarget() == kHigh)) 
+    	//{
+    	//	m_Elevator.setPosition(kHigh);
+    	//} 
+    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
     	{
     		m_Elevator.disablePID();
     		// Elevator power is halved to prevent damage to the elevator when manually controlled
     		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.5);
+    	}
+    	if (m_RobotInterface.GetOperatorButton(8)) {
+    		m_Elevator.setPosition(kTransfer);
+    		if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 1500 ) {
+    			m_Intake.IntakeCube();
+    		}
     	}
     }
     public void intakeControl() {
@@ -983,6 +986,9 @@ public class Robot extends IterativeRobot
     	else if (m_RobotInterface.GetOperatorButton(5) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3))
     	{
     		m_Intake.RotateLeft();
+    	} 
+    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
+    		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
     	} 
     	else 
     	{
