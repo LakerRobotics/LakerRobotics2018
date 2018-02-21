@@ -25,6 +25,8 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	/**
 	 * Hello There! : I'm the base constructor.
 	 */
+	
+	boolean debug = false; //tells is debug prints should be printing or not
 
 	private Encoder m_LeftEncoder;
 	private Encoder m_RightEncoder;
@@ -223,11 +225,11 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 			}
 			return true;
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
+			if(debug) System.out.println("DriveTrainMotionControl.StartSwingTurn Exception "+ex.getMessage());
 		}
-		return false;
-		
+		return false;		
 	}
+	
 	public boolean SetSwingParameters(double angle, boolean isLeft) {
 		try {
 			m_SwingPID.setSetpoint(angle);
@@ -235,14 +237,15 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 			
 			return true;
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
+			System.out.println( "DriveTrainMotionControl.SetSwingParameters Exception " + ex.getMessage());
 		}
 		return false;
 	}
+	
 	public void SwingTurn(double turnSpeed) {
 		m_swingTurnValue = turnSpeed;
-		
-		System.out.println("Swing turn speed: " + turnSpeed);
+
+		if(debug) System.out.println("Swing turn speed: " + turnSpeed);
 		
 		if (m_swingTurnLeft) 
 		{

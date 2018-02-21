@@ -35,9 +35,15 @@ public class BTMacroRecord {
 			//record the time we started recording
 			startTime = System.currentTimeMillis();
 			
-			//put the filesystem location you are supposed to write to as a string 
-			//as the argument in this method, as of 2015 it is /home/lvuser/recordedAuto.csv
-			writer = new FileWriter(Robot.autoFile+Robot.getNextRecorderFileNumber()+".csv");
+			try
+			{
+				//put the filesystem location you are supposed to write to as a string 
+				//as the argument in this method, as of 2015 it is /home/lvuser/recordedAuto.csv
+				writer = new FileWriter(Robot.autoFile+Robot.getNextRecorderFileNumber()+".csv");
+			}
+			catch(Exception e) {
+				System.out.println("BTMacroRecord.BTMacroRecord() trying to open writer for"+Robot.autoFile+Robot.getMaxRecorderFileNumber()+".csv error="+e);
+			}
 	}
 	
 

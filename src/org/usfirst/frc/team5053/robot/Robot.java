@@ -167,7 +167,7 @@ public class Robot extends IterativeRobot
     		m_BTMacroRecord = new BTMacroRecord();
 		}
 		catch(Exception e){
-			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+			System.out.print("Robot.teleopInit() Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
 		}
 
 	}
