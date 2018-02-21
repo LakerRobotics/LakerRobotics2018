@@ -26,7 +26,9 @@ import org.usfirst.frc.team5053.robot.Robot;
 public class BTMacroRecord {
 	
 	//this object writes values into the file we specify
-	FileWriter writer;
+	FileWriter writer = null;
+	
+	boolean debug = true;
 	
 	long startTime;
 	
@@ -49,9 +51,11 @@ public class BTMacroRecord {
 
 	public void record(RobotControllerMap theRobotControllerMap) throws IOException
 	{
-		if(writer != null)
+		if(writer == null) {
+			System.out.print("in BTMacroRecord.record() but writer is null, so exiting without doing anything");
+		}
+		else // writer is available so 
 		{
-			boolean debug = true;
 			if(debug) {
 				System.out.print("in BTMacroRecord.record() "+(System.currentTimeMillis()-startTime)
 					//drive motors		

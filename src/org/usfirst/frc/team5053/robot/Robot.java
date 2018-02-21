@@ -817,8 +817,9 @@ public void disabledInit(){
 		intToReturn = getMaxRecorderFileNumber() + 1;
 		try{
 			System.out.print("NextRecorderFileNumber"+intToReturn);
-		
-			FileWriter writerForAutoFileNumber = new FileWriter(Robot.autoFile);
+		    boolean OVER_WRITE = false;
+//		    boolean APPEND = true;
+			FileWriter writerForAutoFileNumber = new FileWriter(Robot.recorderFileMaxNumber, OVER_WRITE);
 			writerForAutoFileNumber.append(intToReturn + "\n"); 
 			writerForAutoFileNumber.flush();
 			writerForAutoFileNumber.close();
