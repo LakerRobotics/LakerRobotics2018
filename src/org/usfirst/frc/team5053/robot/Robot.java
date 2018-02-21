@@ -180,7 +180,7 @@ public class Robot extends IterativeRobot
          */
         // Record Playback
     	try{
-			m_BTMacroPlay = new BTMacroPlay();
+			m_BTMacroPlay = new BTMacroPlay(); // note this should initalize the file open to read from
 		}
 		catch(Exception e){
 			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
@@ -214,6 +214,12 @@ public class Robot extends IterativeRobot
 
     public void autonomousPeriodic()
     {
+    	boolean debug_record_playback = true;
+    	if(debug_record_playback){
+    		m_BTMacroPlay.play(m_RobotControllers);
+    	}
+    	else
+    	{
 		
     	/**
          * This function is called periodically during autonomous
@@ -248,11 +254,13 @@ public class Robot extends IterativeRobot
 		default: // NO AUTON
 			break;
     	}
+    	}
     	
     	GetDashboardData();
     	WriteDashboardData();
     	
     	autonomousWait++;
+    	
     }
     
     public void turnTest()
