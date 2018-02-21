@@ -1,5 +1,10 @@
 package org.usfirst.frc.team5053.robot;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
 import org.usfirst.frc.team5053.robot.RobotInterfaceMap.JoystickType;
 import org.usfirst.frc.team5053.robot.Sensors.LidarLite;
 import org.usfirst.frc.team5053.robot.Subsystems.Catapult;
@@ -104,7 +109,8 @@ public class Robot extends IterativeRobot
 	//few different auto programs
 		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
 		//autoFile is a global constant that keeps you from recording into a different file than the one you play from
-		public static final String autoFile = new String("/home/lvuser/recordedAuto" + autoNumber + ".csv");
+		public static final String autoFile = new String("/home/lvuser/recordedAuto");
+		public static final String recorderFileMaxNumber = new String("/home/lvuser/recorderMaxNumber.csv");
 	
 	
 	//Misc variables
@@ -148,22 +154,38 @@ public class Robot extends IterativeRobot
     	diagnosticPowerSent = new double[202];
     	arrIndex = 0;
     	
+    }
+    
+    
+    
+    
+	@Override
+	public void teleopInit(){
+		isRecording= false;
     	// Record Playback
     	try{
     		m_BTMacroRecord = new BTMacroRecord();
-			m_BTMacroPlay = new BTMacroPlay();
 		}
 		catch(Exception e){
 			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
 		}
-    	
-    }
 
+	}
+
+	@Override
     public void autonomousInit() 
     {
     	 /**
          * This function is called once when autonomous begins
          */
+        // Record Playback
+    	try{
+			m_BTMacroPlay = new BTMacroPlay();
+		}
+		catch(Exception e){
+			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
+         
     	
     	// Initialize autonomous variables
     	autonomousCase = 0;
@@ -750,4 +772,55 @@ public void disabledInit(){
     {
     	m_DriveTrain.WriteDashboardData();
     }
+    
+    public static int getMaxRecorderFileNumber()
+    {
+    	int intToReturn = 0;
+		//create a scanner to read the file created during BTMacroRecord
+		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
+		File fileMaxNumber = new File(Robot.recorderFileMaxNumber);
+		try
+		{
+			Scanner scannerMaxNumber = new Scanner(fileMaxNumber);
+		
+			//let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
+			scannerMaxNumber.useDelimiter(",|\\n");
+		
+			if (scannerMaxNumber.hasNextInt())
+			{
+				intToReturn = scannerMaxNumber.nextInt();
+			}
+			else{
+				intToReturn = 0;
+			}
+			scannerMaxNumber.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
+		}
+		return intToReturn;
+    }
+		
+	public static int getNextRecorderFileNumber()
+	{
+		int intToReturn;
+		// increment to next unused number
+		intToReturn = getMaxRecorderFileNumber() + 1;
+		try{
+			System.out.print("NextRecorderFileNumber"+intToReturn);
+		
+			FileWriter writerForAutoFileNumber = new FileWriter(Robot.autoFile);
+			writerForAutoFileNumber.append(intToReturn + "\n"); 
+			writerForAutoFileNumber.flush();
+			writerForAutoFileNumber.close();
+		}
+		catch(Exception e){
+			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
+		}
+			
+		return intToReturn;
+	}
+	
+    
 }

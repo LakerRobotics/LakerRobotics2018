@@ -33,7 +33,7 @@ public class BTMacroPlay {
 	{
 		//create a scanner to read the file created during BTMacroRecord
 		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
-		scanner = new Scanner(new File(Robot.autoFile));
+		scanner = new Scanner(new File(Robot.autoFile + Robot.getMaxRecorderFileNumber()) + ".csv");
 		
 		//let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
 		scanner.useDelimiter(",|\\n");
