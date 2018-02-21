@@ -44,6 +44,11 @@ public class BTMacroPlay {
 	
 	public void play(RobotControllerMap theRobotControllerMap)
 	{
+		boolean debug = true;
+		if(debug) {
+			System.out.print("BTMacroRecord.play() entered");
+		}
+		
 		//if recordedAuto.csv has a double to read next, then read it
 		if ((scanner != null) && (scanner.hasNextDouble()))
 		{
@@ -82,7 +87,20 @@ public class BTMacroPlay {
 				/*
 				 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
 				 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
-				 */ 
+				 */
+				if(debug) {
+					System.out.print("in BTMacroRecord.play() "+(System.currentTimeMillis()-startTime)
+						//drive motors		
+						+"," + theRobotControllerMap.getLeftDriveGroup().get()
+						+"," + theRobotControllerMap.getRightDriveGroup().get()
+						//intake motors
+						+"," + theRobotControllerMap.getLeftIntake().get()
+						+"," + theRobotControllerMap.getRightIntake().get()
+						//Elevator motor
+						+"," + theRobotControllerMap.getElevator().get()
+						+ "\n"
+					);
+				}
 				
 				//this records a true/false value from a piston
 //				theRobotControllerMap.getCatapult().set(scanner.nextBoolean() );
