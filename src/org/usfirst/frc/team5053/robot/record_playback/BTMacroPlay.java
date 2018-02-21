@@ -24,6 +24,8 @@ import org.usfirst.frc.team5053.robot.Robot;
 public class BTMacroPlay {
 	Scanner scanner;
 	long startTime; 
+	
+	boolean debug = true;
 
 	boolean onTime = true;
 	double nextDouble;
@@ -33,7 +35,7 @@ public class BTMacroPlay {
 	{
 		//create a scanner to read the file created during BTMacroRecord
 		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
-		scanner = new Scanner(new File(Robot.autoFile + Robot.getMaxRecorderFileNumber()) + ".csv");
+		scanner = new Scanner(new File(getPlaybackFileName()));
 		
 		//let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
 		scanner.useDelimiter(",|\\n");
@@ -41,10 +43,12 @@ public class BTMacroPlay {
 		//lets set start time to the current time you begin autonomous
 		startTime = System.currentTimeMillis();	
 	}
+	public String getPlaybackFileName() {
+		return Robot.autoFile + Robot.getMaxRecorderFileNumber() + ".csv";
+	}
 	
 	public void play(RobotControllerMap theRobotControllerMap)
 	{
-		boolean debug = true;
 		if(debug) {
 			System.out.print("BTMacroRecord.play() entered");
 		}
@@ -132,7 +136,11 @@ public class BTMacroPlay {
 		//end play, there are no more values to find
 		else
 		{
-			this.end(theRobotControllerMap);// rgt 20180217 dont know what this does, ends the thread running? form the start code .end( storage);
+			if(debug) {
+				System.out.print("in BTMacroRecord.play() no more values in the playback file "+getPlaybackFileName());
+			}
+
+			this.end(theRobotControllerMap);// This set all the motors to 0;
 			if (scanner != null) 
 			{
 				scanner.close();
