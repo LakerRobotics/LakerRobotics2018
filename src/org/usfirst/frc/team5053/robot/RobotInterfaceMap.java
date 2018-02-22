@@ -63,7 +63,7 @@ public class RobotInterfaceMap
 	private int operatorRightY = 0;
 	
 	// Start recording for record playback in auton feature (this is for proof of concept should move to custom dashboard once debugged)
-	private int recordButton = 0;
+	private int recordButton = 11;
 	
 	private Joystick driverJoystick;
 	private Joystick operatorJoystick;
@@ -166,7 +166,7 @@ public class RobotInterfaceMap
 		}	
 		
 		// Set the record button to be on the Operator controller start button
-		recordButton = operatorStartButton;
+		recordButton = 11;
 	}
 
 

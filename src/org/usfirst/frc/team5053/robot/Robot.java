@@ -198,8 +198,10 @@ public class Robot extends IterativeRobot
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
     	// Parse matchData  for the switch and scale position in order to determine which way to turn later
-    	switchChar = matchData.charAt(0);
-    	scaleChar = matchData.charAt(1);
+//temp    	switchChar = matchData.charAt(0);
+//temp    	scaleChar = matchData.charAt(1);
+    	switchChar = 'R';
+    	scaleChar = 'R';
     	
     	if(switchChar == 'R')
     		switchTurn = 1; // Determines the switch plate we aim at where positive turns right(clockwise)
@@ -661,6 +663,7 @@ public class Robot extends IterativeRobot
 	//Record for record playback
     	//the statement in this "if" checks if a button you designate as your record button 
     	//has been pressed, and stores the fact that it has been pressed in a variable
+    	System.out.println("Robot.record4LaterPlayback() m_RobotInterface.GetRecord()="+m_RobotInterface.GetRecord()+"  isRecording="+isRecording);
     	if (m_RobotInterface.GetRecord()) 
 		{
     		isRecording = true;

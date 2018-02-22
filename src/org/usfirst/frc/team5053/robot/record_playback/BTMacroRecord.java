@@ -41,6 +41,7 @@ public class BTMacroRecord {
 			{
 				//put the filesystem location you are supposed to write to as a string 
 				//as the argument in this method, as of 2015 it is /home/lvuser/recordedAuto.csv
+				System.out.println("BTMacroRecord.BTMacroRecord() constructor about to create a new writter created for file "+(Robot.autoFile+Robot.getMaxRecorderFileNumber()+1)+".csv ");
 				writer = new FileWriter(Robot.autoFile+Robot.getNextRecorderFileNumber()+".csv");
 			}
 			catch(Exception e) {
