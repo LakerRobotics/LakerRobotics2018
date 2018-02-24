@@ -27,6 +27,8 @@ public class BTMacroPlay {
 	Scanner scanner;
 	long startTime; 
 	
+	int m_fileNumber;
+	
 	boolean debug = true;
 
 	boolean onTime = true;
@@ -37,6 +39,13 @@ public class BTMacroPlay {
 
 	public BTMacroPlay() throws FileNotFoundException
 	{
+		// Call the construtor using the max (i.e. latest) recorded file
+		this(Robot.getMaxRecorderFileNumber());
+	}
+		
+	public BTMacroPlay(int fileNumber) throws FileNotFoundException
+	{
+		m_fileNumber = fileNumber;
 		//create a scanner to read the file created during BTMacroRecord
 		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
 		scanner = new Scanner(new File(getPlaybackFileName()));
@@ -47,8 +56,9 @@ public class BTMacroPlay {
 		//lets set start time to the current time you begin autonomous
 		startTime = System.currentTimeMillis();	
 	}
+	
 	public String getPlaybackFileName() {
-		return Robot.autoFile + Robot.getMaxRecorderFileNumber() + ".csv";
+		return Robot.autoFile + m_fileNumber + ".csv";
 	}
 	
 	public void play(RobotControllerMap theRobotControllerMap)
