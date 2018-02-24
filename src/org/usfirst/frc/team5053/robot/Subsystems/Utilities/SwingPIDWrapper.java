@@ -5,13 +5,12 @@ import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PIDSourceType;
 
-public class AnglePIDWrapper implements PIDOutput, PIDSource {
+public class SwingPIDWrapper implements PIDOutput, PIDSource {
 	
-	private DriveTrainMotionControl m_DriveTrain;
-	
-	public AnglePIDWrapper(DriveTrainMotionControl drivetrain)
+	private DriveTrainMotionControl m_drivetrain;
+	public SwingPIDWrapper(DriveTrainMotionControl drivetrain)
 	{
-		m_DriveTrain = drivetrain;
+		m_drivetrain = drivetrain;
 	}
 
 	@Override
@@ -22,7 +21,7 @@ public class AnglePIDWrapper implements PIDOutput, PIDSource {
 
 	@Override
 	public double pidGet() {
-		return (m_DriveTrain.GetAngle());
+		return (m_drivetrain.GetAngle());
 	}
 
 	@Override
@@ -33,8 +32,7 @@ public class AnglePIDWrapper implements PIDOutput, PIDSource {
 
 	@Override
 	public void pidWrite(double output) {
-		// TODO I had to invert this
-		m_DriveTrain.setTurn(-output);
+		m_drivetrain.SwingTurn(-output);
 	}
 
 }

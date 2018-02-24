@@ -15,6 +15,8 @@ public class MotionController
 	
 	private MotionControlPIDController m_StraightPIDController;
 	private StraightMotionPIDOutput m_StraightPIDOutput;
+	private ControlledAngleDrivePIDOutput m_ControlledAngleDrivePIDOutput;
+	private MotionControlPIDController m_ControlledAngleDrivePIDController;
 	private MotionControlPIDController m_TurnPIDController;
 	private MotionControlPIDController m_ArcPIDController;
 	
@@ -25,7 +27,7 @@ public class MotionController
 	private double m_AngularVelocityTolerance;
 	private boolean m_PIDEnabled;
 	
-	private final double TurnKp = 0.00125;
+	private final double TurnKp = 0.0025;
 	private final double TurnKi = 0.0020;
 	private final double TurnKd = 0.0;
 	
@@ -50,14 +52,15 @@ public class MotionController
 		
 		m_StraightPIDController = null;
 		m_StraightPIDOutput = null;
+		m_ControlledAngleDrivePIDOutput = null;
 		m_TurnPIDController = null;
 		
 		
 		m_targetDistance = 0;
 		m_targetAngle = 0;
 		m_StraightTolerance = 0.5;
-		m_TurnTolerance = 0.25;
-		m_AngularVelocityTolerance = 30;
+		m_TurnTolerance = 0.5;
+		m_AngularVelocityTolerance = 15;
 		m_PIDEnabled = false;
 		
 	}
@@ -71,9 +74,9 @@ public class MotionController
 			
 			double start = 0;
 			
-			double convertedDistance = distance;
-			double convertedSpeed = maxspeed * 12; // Inches
-			double convertedRamp = ramp;
+			double convertedDistance = distance;	// Inches
+			double convertedSpeed = maxspeed * 12; 	// Converted from Feet/Second to Inches/Second
+			double convertedRamp = ramp;			// Inches/Second
 			
 			if (!(Math.abs(m_DriveTrain.GetLeftDistance()) > Math.abs(m_targetDistance)))
 			{
@@ -101,11 +104,12 @@ public class MotionController
 		{
 			m_DriveTrain.ResetGyro();
 			
-			//Magic numbers need fixing
-			double maxRPM = 15/*30*/;
-			double ramp = maxRPM * 2/* 3.5 * maxRPM*/;
+			//TODO Magic numbers need fixing
+			//TODO What are the units?
+			double maxRPM = 15/*30*/;			// Rotations/Minute
+			double ramp = 30/* 3.5 * maxRPM*/;	// I guess its also rotations per minute?
 			
-			double maxSpeed = maxRPM * 6; //360 Degrees/60 seconds to convert RPM to speed or degrees per second
+			double maxSpeed = maxRPM * 6; // 360 Degrees/60 seconds to convert RPM to speed or degrees per second
 			double start = m_DriveTrain.GetAngle();
 			m_targetAngle = turnAngle + start;
 			
@@ -129,12 +133,46 @@ public class MotionController
 		}
 		return true;
 	}
+	public boolean ExecuteControlledAngleDriveMotion(double distance, double maxspeed, double ramp, double angle)
+	{
+		if (!m_PIDEnabled)
+		{
+			m_targetAngle = angle;
+			m_targetDistance = distance;
+			m_DriveTrain.ResetEncoders();
+			
+			double start = 0;
+			
+			double convertedDistance = distance;	// Inches
+			double convertedSpeed = maxspeed * 12; 	// Converted from Feet/Second to Inches/Second
+			double convertedRamp = ramp;			// Inches/Second
+			
+			if (!(Math.abs(m_DriveTrain.GetLeftDistance()) > Math.abs(m_targetDistance)))
+			{
+				//Instantiates a new MotionControlHelper() object for the new drive segment
+				m_ControlledAngleDrivePIDOutput = new ControlledAngleDrivePIDOutput(m_DriveTrain, m_TurnSource, m_targetAngle);
+				m_StraightControl = new MotionControlHelper(convertedDistance, convertedRamp, convertedSpeed, start, m_StraightSource, m_ControlledAngleDrivePIDOutput);
+				
+				//Instantiates a new MotionControlPIDController() object for the new drive segment using the previous MotionControlHelper()
+				m_ControlledAngleDrivePIDController = new MotionControlPIDController(StraightKp, StraightKi, StraightKd, m_StraightControl);
+				m_ControlledAngleDrivePIDController.setAbsoluteTolerance(m_StraightTolerance);
+				m_ControlledAngleDrivePIDController.setOutputRange(-1.0, 1.0);
+				
+				//Turns the MotionControlPID ON and it will continue to execute by itself until told otherwise.
+				m_ControlledAngleDrivePIDController.enable();
+				m_PIDEnabled = true;
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
 	/**
 	 * 
 	 * @param distance  to travel in inches
 	 * @param maxSpeed  in ft/sec
 	 * @param ramp      in inches
-	 * @param radiusOfArch  The arc travel path of the robot
+	 * @param radiusOfArc  The arc travel path of the robot
 	 * @return true if it has completed the arc path
 	 */
 	public boolean ExecuteArcMotion(double distance, double maxSpeed, double ramp, double radiusOfArc)
@@ -148,9 +186,9 @@ public class MotionController
 		
 		if (!isPIDEnabled())
 		{
-			double convertedDistance = distance;
-			double convertedSpeed = maxSpeed * 12; // convert to Inches/sec
-			double convertedRamp = ramp; // in inches
+			double convertedDistance = distance; 	// In inches
+			double convertedSpeed = maxSpeed * 12; 	// convert from feet to inches/second
+			double convertedRamp = ramp; 			// in inches
 			
 			motionControlArc = new ArcMotionPIDOutput(m_DriveTrain, m_TurnSource, radiusOfArc);
 
@@ -179,10 +217,15 @@ public class MotionController
 		SmartDashboard.putNumber("Straight Tolerance", m_StraightTolerance);
 		
 		//TODO Verify this tolerance works... it should...
+		SmartDashboard.putNumber("Average Distance", m_DriveTrain.GetAverageDistance());
+		SmartDashboard.putNumber("Target", Math.abs(m_targetDistance - m_StraightTolerance));
 		if (Math.abs(m_DriveTrain.GetLeftDistance()) >= Math.abs(m_targetDistance - m_StraightTolerance))
 		{
 			//Always tripped
-			m_StraightPIDController.disable();
+			if(m_StraightPIDController != null)
+				m_StraightPIDController.disable();
+			if(m_ControlledAngleDrivePIDController != null)
+				m_ControlledAngleDrivePIDController.disable();
 			m_DriveTrain.ArcadeDrive(0, 0);
 			m_PIDEnabled = false;
 			return true;
@@ -239,6 +282,11 @@ public class MotionController
 		{
 			m_StraightPIDController.disable();
 			m_StraightPIDOutput.disableRotationController();
+		}
+		if(m_ControlledAngleDrivePIDController != null)
+		{
+			m_ControlledAngleDrivePIDController.disable();
+			m_ControlledAngleDrivePIDOutput.disableRotationController();
 		}
 	}
 }
