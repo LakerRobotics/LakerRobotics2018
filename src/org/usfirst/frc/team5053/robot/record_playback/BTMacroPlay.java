@@ -30,6 +30,8 @@ public class BTMacroPlay {
 	boolean onTime = true;
 	double nextDouble;
 	
+	boolean done = false;
+	
 
 	public BTMacroPlay() throws FileNotFoundException
 	{
@@ -139,6 +141,7 @@ public class BTMacroPlay {
 			if(debug) {
 				System.out.print("in BTMacroRecord.play() no more values in the playback file "+getPlaybackFileName());
 			}
+			done = true;
 
 			this.end(theRobotControllerMap);// This set all the motors to 0;
 			if (scanner != null) 
@@ -150,6 +153,8 @@ public class BTMacroPlay {
 		
 	}
 	
+	boolean isDone() {return done;};
+			
 	//stop motors and end playing the recorded file
 	public void end(RobotControllerMap theRobotControllerMap)
 	{
