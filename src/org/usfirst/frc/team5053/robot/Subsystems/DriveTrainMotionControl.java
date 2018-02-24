@@ -25,7 +25,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	/**
 	 * Hello There! : I'm the base constructor.
 	 */
-	
+
 	boolean debug = false; //tells is debug prints should be printing or not
 
 	private Encoder m_LeftEncoder;

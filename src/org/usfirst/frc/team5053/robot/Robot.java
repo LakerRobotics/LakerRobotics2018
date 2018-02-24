@@ -1,10 +1,5 @@
 package org.usfirst.frc.team5053.robot;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-
 import org.usfirst.frc.team5053.robot.RobotInterfaceMap.JoystickType;
 import org.usfirst.frc.team5053.robot.Sensors.LidarLite;
 import org.usfirst.frc.team5053.robot.Subsystems.Catapult;

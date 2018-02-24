@@ -127,7 +127,7 @@ import edu.wpi.first.wpilibj.PIDOutput;
 			@Override
 			public void pidWrite(double rotationPower) 
 			{
-				this.m_RotationPowerDestination.setRotationPower(rotationPower);
+				this.m_RotationPowerDestination.setRotationPower(-rotationPower);
 			}
 
 	    }
