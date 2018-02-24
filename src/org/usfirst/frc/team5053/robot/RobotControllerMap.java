@@ -28,6 +28,7 @@ public class RobotControllerMap
 	private final int rightDrive2PWM 	= 4;
 	private final int intakeLeftPWM 	= 0;
 	private final int intakeRightPWM 	= 1;
+	private final int rollerPWM = 6;
 	
 	private final int elevatorCAN = 1;
 	
@@ -45,6 +46,7 @@ public class RobotControllerMap
 	private Talon m_RightDrive2;
 	private Talon m_Intake1;
 	private Talon m_Intake2;
+	private Talon m_Roller;
 
 	private TalonSRX m_Elevator;
 	
@@ -78,6 +80,8 @@ public class RobotControllerMap
 		m_Intake1 = new Talon(intakeLeftPWM);
 		m_Intake2 = new Talon(intakeRightPWM);
 		
+		m_Roller = new Talon(rollerPWM);
+		
 		m_CatapultLeft = new DoubleSolenoid(catapultLeftExpandSolenoidSlot, catapultLeftRetractSolenoidSlot);
 		m_CatapultRight = new DoubleSolenoid(catapultRightExpandSolenoidSlot, catapultRightRetractSolenoidSlot);
 		m_IntakeSolenoid = new DoubleSolenoid(intakeExpandSolenoidSlot, intakeRetractSolenoidSlot);
@@ -99,6 +103,9 @@ public class RobotControllerMap
 	}
 	public Talon getRightIntake() {
 		return m_Intake2;
+	}
+	public Talon getRoller() {
+		return m_Roller;
 	}
 	
 	public DoubleSolenoid getCatapultLeft() {

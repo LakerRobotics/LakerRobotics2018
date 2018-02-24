@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Elevator implements Subsystem {
 
 	private TalonSRX m_Talon;
+	private DigitalInput m_LimitHigh;
+	private DigitalInput m_LimitLow;
 	
 	private final double kp = 0.08;
 	private final double ki = 0.0;
@@ -23,9 +25,13 @@ public class Elevator implements Subsystem {
 	private final double TOLERANCE = 200;
 	
 	
-	public Elevator(TalonSRX speedController)
+	
+	
+	public Elevator(TalonSRX speedController, DigitalInput limitHigh, DigitalInput limitLow)
 	{
 		m_Talon = speedController;
+		m_LimitHigh = limitHigh;
+		m_LimitLow = limitLow;
 		
 		m_Talon.config_kP(0, kp, 4000);
 		m_Talon.config_kI(0, ki, 4000);
@@ -37,9 +43,20 @@ public class Elevator implements Subsystem {
 	public void manualControl(double speed)
 	{
 		// Runs at half speed for manual control
+		if (speed > 0 && m_LimitHigh.get()) {
+			speed = 0;
+		} else if (speed < 0 && m_LimitLow.get()) {
+			speed = 0;
+		}
+		
 		m_Talon.set(ControlMode.PercentOutput, speed);
 	}
-	
+	public boolean getLimitHigh() {
+		return m_LimitHigh.get();
+	}
+	public boolean getLimitLow() {
+		return m_LimitLow.get();
+	}
 	public void setPosition(double position)
 	{
 		m_PositionTarget = position;

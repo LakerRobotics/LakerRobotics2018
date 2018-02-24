@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -68,6 +69,7 @@ public class Robot extends IterativeRobot
 	private Catapult m_ThePult;
 	private LidarLite m_Lidar;
 	private Compressor m_Compressor;
+	private Talon m_Roller;
 	
 	//Vision declaration
 	
@@ -112,6 +114,7 @@ public class Robot extends IterativeRobot
 	private final int SWITCH_CATAPULT_DELAY = 5;
 	private int m_shortCatapultDelay = 0;
 	private boolean isShotFinished = true;
+	private boolean hasElevatorEncoderZeroed = false;
 	
 	@Override
     public void robotInit()
@@ -127,9 +130,10 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator());
+    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorLimitHigh(), m_RobotSensors.getElevatorLimitLow());
     	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
     	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
+    	m_Roller = m_RobotControllers.getRoller();
     	// Scaler
     	
     	CameraServer server = CameraServer.getInstance();
@@ -191,6 +195,13 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during autonomous
          */
+    	if (!hasElevatorEncoderZeroed) {
+    		m_Elevator.manualControl(-.30);
+    	}
+    	if (m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
+    		m_Elevator.resetEncoder();
+    		hasElevatorEncoderZeroed = true;
+    	}
     	switch(autonRoutine.toLowerCase())
     	{
     	case "none": // NO AUTON
@@ -909,6 +920,7 @@ public class Robot extends IterativeRobot
     	elevatorControl();
     	intakeControl();
     	catapultControl();
+    	rollerControl();
     	
     	// Other
     	
@@ -1024,6 +1036,15 @@ public class Robot extends IterativeRobot
     		m_catapultDelay--;
     	}
     	
+    }
+    public void rollerControl() {
+    	if (m_RobotInterface.GetOperatorButton(11)) {
+    		m_Roller.set(.80);
+    	} else if (m_RobotInterface.GetOperatorButton(12)) {
+    		m_Roller.set(-.80);
+    	} else {
+    		m_Roller.set(0.0);
+    	}
     }
     
     public void switchCatapultShot()
