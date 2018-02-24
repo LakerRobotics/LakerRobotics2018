@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+
 import org.usfirst.frc.team5053.robot.RobotControllerMap;
 import org.usfirst.frc.team5053.robot.Robot;
 
@@ -89,7 +91,7 @@ public class BTMacroPlay {
 				theRobotControllerMap.getRightIntake().set(scanner.nextDouble());
 				
 				//Elevator motor
-				theRobotControllerMap.getElevator().set(scanner.nextDouble());
+				theRobotControllerMap.getElevator().set(ControlMode.PercentOutput,scanner.nextDouble());
 				/*
 				 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
 				 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
@@ -103,7 +105,7 @@ public class BTMacroPlay {
 						+"," + theRobotControllerMap.getLeftIntake().get()
 						+"," + theRobotControllerMap.getRightIntake().get()
 						//Elevator motor
-						+"," + theRobotControllerMap.getElevator().get()
+						+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
 						+ "\n"
 					);
 				}
@@ -167,7 +169,8 @@ public class BTMacroPlay {
 		theRobotControllerMap.getRightIntake().set(0);
 		
 		//Elevator motor
-		theRobotControllerMap.getElevator().set(0);
+		theRobotControllerMap.getElevator().set(ControlMode.PercentOutput,0);
+
 		/*
 		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
 		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION

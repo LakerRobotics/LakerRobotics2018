@@ -66,7 +66,7 @@ public class BTMacroRecord {
 					+"," + theRobotControllerMap.getLeftIntake().get()
 					+"," + theRobotControllerMap.getRightIntake().get()
 					//Elevator motor
-					+"," + theRobotControllerMap.getElevator().get()
+					+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
 					+ "\n"
 				);
 			}
@@ -85,7 +85,7 @@ public class BTMacroRecord {
 		writer.append("," + theRobotControllerMap.getRightIntake().get());
 		
 		//Elevator motor
-		writer.append("," + theRobotControllerMap.getElevator().get());
+		writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
 		/*
 		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
 		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
