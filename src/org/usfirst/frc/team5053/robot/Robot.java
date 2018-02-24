@@ -8,13 +8,13 @@ import org.usfirst.frc.team5053.robot.Subsystems.Elevator;
 import org.usfirst.frc.team5053.robot.Subsystems.Intake;
 
 import edu.wpi.first.wpilibj.CameraServer;
-import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import org.usfirst.frc.team5053.robot.record_playback.BTMacroRecord;
+import org.usfirst.frc.team5053.robot.record_playback.BTMacroPlay;
 
 
 /**
@@ -40,7 +40,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * 
  * Operator Controls
  * Joystick Y - Manual Elevator Height
- * Trigger	- Retract Intake Solenoid
  * Button 3 - Intake Cube
  * Button 4 - Release Cube
  * Button 5 - Rotate Cube Left
@@ -64,12 +63,10 @@ public class Robot extends IterativeRobot
 	
 	//Robot Subsystem Declaration
 	private DriveTrainMotionControl m_DriveTrain;
-	private Elevator m_Elevator;
+//	private Elevator m_Elevator;
 	private Intake m_Intake;
 	private Catapult m_ThePult;
 	private LidarLite m_Lidar;
-	private Compressor m_Compressor;
-	private Talon m_Roller;
 	
 	//Vision declaration
 	
@@ -98,23 +95,28 @@ public class Robot extends IterativeRobot
 	private double[] diagnosticPowerSent;
 	private int arrIndex;
 	
+	// Record Playback
+	BTMacroRecord m_BTMacroRecord;
+	BTMacroPlay m_BTMacroPlay;
+	
+	boolean isRecording = false;
+	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
+	//few different auto programs
+		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
+		//autoFile is a global constant that keeps you from recording into a different file than the one you play from
+		public static final String autoFile = new String("/home/lvuser/recordedAuto");
+		public static final String recorderFileMaxNumber = new String("/home/lvuser/recorderMaxNumber.csv");
 	
 	
 	//Misc variables
-	// TODO MUST BE INVERTED the SRX encoder is wired incorrectly and we can't invert only the encoder 
 	private final double kFloor = 0.0;
-	private final double kTransfer = -10000.0; //-13290.0
+	private final double kTransfer = 0.0;
 	private final double kLow = 0.0;
-	private final double kHigh = -19569.0;
+	private final double kHigh = 0.0;
 	
 	private double m_driveSpeed = 1.0;
 	
 	private int m_catapultDelay = 0;
-	
-	private final int SWITCH_CATAPULT_DELAY = 5;
-	private int m_shortCatapultDelay = 0;
-	private boolean isShotFinished = true;
-	private boolean hasElevatorEncoderZeroed = false;
 	
 	@Override
     public void robotInit()
@@ -130,19 +132,14 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorLimitHigh(), m_RobotSensors.getElevatorLimitLow());
-    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
-    	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
-    	m_Roller = m_RobotControllers.getRoller();
+//    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorEncoder());
+    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake());
+    	m_ThePult = new Catapult(m_RobotControllers.getCatapult());
     	// Scaler
     	
     	CameraServer server = CameraServer.getInstance();
+    	//server.setQuality(50);
     	server.startAutomaticCapture();
-    	
-    	m_Compressor = new Compressor(0);
-
-    	//m_Compressor.start();
-    	m_Compressor.setClosedLoopControl(true);
     	
     	// Diagnostic variable initialization
     	//m_NetworkTable =  NetworkTable.getTable("SmartDashboard");
@@ -153,12 +150,37 @@ public class Robot extends IterativeRobot
     	arrIndex = 0;
     	
     }
+    
+    
+    
+    
+	@Override
+	public void teleopInit(){
+		isRecording= false;
+    	// Record Playback
+    	try{
+    		m_BTMacroRecord = new BTMacroRecord();
+		}
+		catch(Exception e){
+			System.out.print("Robot.teleopInit() Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
 
+	}
+
+	@Override
     public void autonomousInit() 
     {
     	 /**
          * This function is called once when autonomous begins
          */
+        // Record Playback
+    	try{
+			m_BTMacroPlay = new BTMacroPlay(); // note this should initalize the file open to read from
+		}
+		catch(Exception e){
+			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
+         
     	
     	// Initialize autonomous variables
     	autonomousCase = 0;
@@ -166,13 +188,15 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	autonRoutine = "test"; //SmartDashboard.getString("Auton Selection", "center scale");		// Start position of the robot from our side of the field
-    	secondPart = SmartDashboard.getBoolean("Second Step", false);			// Second part of auton routine
+    	autonRoutine = SmartDashboard.getString("Auton Routine", "Center Scale");		// Start position of the robot from our side of the field
+    	secondPart = SmartDashboard.getBoolean("Second Part", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
     	// Parse matchData  for the switch and scale position in order to determine which way to turn later
-    	switchChar = matchData.charAt(0);
-    	scaleChar = matchData.charAt(1);
+//temp    	switchChar = matchData.charAt(0);
+//temp    	scaleChar = matchData.charAt(1);
+    	switchChar = 'R';
+    	scaleChar = 'R';
     	
     	if(switchChar == 'R')
     		switchTurn = 1; // Determines the switch plate we aim at where positive turns right(clockwise)
@@ -183,94 +207,72 @@ public class Robot extends IterativeRobot
     		scaleTurn = -1; // Final turn is always Counter clockwise when the scale is on the right side
     	else
     		scaleTurn = 1; // And vice versa
-    	
-    	m_DriveTrain.ResetGyro();
-    	m_DriveTrain.ResetEncoders();
-    	m_Elevator.resetEncoder();
     }
 
     public void autonomousPeriodic()
     {
+    	boolean debug_record_playback = true;
+    	if(debug_record_playback){
+    		m_BTMacroPlay.play(m_RobotControllers);
+    	}
+    	else
+    	{
 		
     	/**
          * This function is called periodically during autonomous
          */
-    	if (!hasElevatorEncoderZeroed) {
-    		m_Elevator.manualControl(-.30);
-    	}
-    	if (m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
-    		m_Elevator.resetEncoder();
-    		hasElevatorEncoderZeroed = true;
-    	}
     	switch(autonRoutine.toLowerCase())
     	{
     	case "none": // NO AUTON
     		break;
-    	case "switch": // CENTER AUTON SWITCH FIRST
-    		switchCenter();
+    	case "center": // CENTER AUTON SWITCH FIRST
+    		centerSwitch();
 			break;
-    	case "left scale": // LEFT AUTON SCALE FIRST
-    		//scaleLeftRight();
-    		worstCaseScenarioScaleLeftRightTest();
-    		break;
-    	case "center scale": // CENTER AUTON SCALE
+    	case "center scale":
     		scaleCenter();
     		break;
-    	case "right scale": // RIGHT AUTON SCALE FIRST
-    		//scaleLeftRight();
-    		worstCaseScenarioScaleLeftRightTest();
+    	case "left": // LEFT AUTON SCALE FIRST
+    		scaleSides();
     		break;
-    	case "diagnostic": // DEBUG AUTO
+    	case "right": // RIGHT AUTON SCALE FIRST
+    		scaleSides();
+    		break;
+    	case "debug": // DEBUG AUTO
 			diagnosticTest();
 			break;
     	case "test":
-    		switchShotTest();
-    		//swingTest();
+    		swingTest();
     		//straightTest();
-    		//controlledAngleTest();
     		//turnTest();
+    		break;
+    	case "playback":
+    		m_BTMacroPlay.play(m_RobotControllers);
     		break;
 		default: // NO AUTON
 			break;
+    	}
     	}
     	
     	GetDashboardData();
     	WriteDashboardData();
     	
     	autonomousWait++;
+    	
     }
     
-    public void controlledAngleTest()
-    {
-    	switch(autonomousCase)
-    	{
-    	case 0:
-    		m_DriveTrain.DriveControlledAngle(120, 5, 20, 0);
-    		autonomousCase++;
-    		break;
-    	case 1:
-    		if(m_DriveTrain.isStraightPIDFinished())
-    		{
-    			m_DriveTrain.DisablePIDControl();
-    			autonomousCase++;
-    		}
-    		break;
-    	case 2:
-    		break;
-    	}
-    }
     public void turnTest()
     {
     	switch(autonomousCase)
     	{
     	case 0:
-    		m_DriveTrain.TurnToAngle(90);
+    		m_DriveTrain.setAngle(90);
+    		m_DriveTrain.enableTurnPID();
     		autonomousCase++;
     		break;
     	case 1:
-    		if(m_DriveTrain.isTurnPIDFinished())
+    		if(m_DriveTrain.isTurnPIDOnTarget())
     		{
-    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.disableTurnPID();
     			m_DriveTrain.ArcadeDrive(0, 0);
     			autonomousCase++;
     		}
@@ -284,7 +286,7 @@ public class Robot extends IterativeRobot
     	switch(autonomousCase)
     	{
     	case 0:
-    		m_DriveTrain.DriveDistance(120, 8, 20);
+    		m_DriveTrain.DriveDistance(60, 10, 8);
     		autonomousCase++;
     		break;
     	case 1:
@@ -298,23 +300,25 @@ public class Robot extends IterativeRobot
     	case 2:
     		break;
     	}
-    } 
+    }
+    
     public void swingTest()
     {
     	switch(autonomousCase)
     	{
     	case 0:
-    		SmartDashboard.putBoolean("Swing test complete", false);
     		m_DriveTrain.ResetGyro();
-    		m_DriveTrain.SetSwingParameters(-45, true);
+    		m_DriveTrain.SetSwingParameters(30, true);
     		m_DriveTrain.StartSwingTurn();
     		autonomousCase++;
     		break;
     	case 1:
+    		//if(m_DriveTrain.SwingAngleOnTarget())
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
-    			m_DriveTrain.disableSwingPID();
-    			m_DriveTrain.DriveControlledAngle(2*12, 5, 20, -45);
+        		m_DriveTrain.disableSwingPID();
+        		m_DriveTrain./*DriveDistance*/DriveControlledAngle(12*4.5, 8, 5, 30);
+    			
     			autonomousCase++;
     		}
     		break;
@@ -322,32 +326,16 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-        		SmartDashboard.putBoolean("Swing test complete", true);
-        		autonomousCase++;
+        		m_DriveTrain.SetSwingParameters(0, false);
+        		m_DriveTrain.StartSwingTurn();
+    			autonomousCase++;
     		}
     		break;
     	case 3:
-    		break;
-    	}
-    }
-    public void switchShotTest()
-    {
-    	switch(autonomousCase)
-    	{
-        case 0: // Launch cube into switch with the short shot
-    		m_ThePult.Launch();
-    			
-			autonomousWait = 0;
-			autonomousCase++;
-			break;
-    	case 1:
-    		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
+    		if(m_DriveTrain.SwingAngleOnTarget())
     		{
-    			m_ThePult.Arm();
-        		autonomousCase++;
+    			m_DriveTrain.disableSwingPID();
     		}
-    		break;
-    	case 2:
     		break;
     	}
     }
@@ -426,82 +414,53 @@ public class Robot extends IterativeRobot
     	
     }
     
-    // TODO Straight drive length?
-    public void switchCenter()
+    public void centerSwitch()
     {
     	switch(autonomousCase)
     	{
-    	case 0: // Swing to move toward the desired switch plate
-    		if(switchChar == 'L')
-    		{
-        		m_DriveTrain.SetSwingParameters(-30, false);
-    		}
-    		else
-    		{
-    			m_DriveTrain.SetSwingParameters(30, true);
-    		}
-    		m_DriveTrain.StartSwingTurn();
+    	case 0: // Drive to decision point
+    		m_DriveTrain.DriveDistance(9.5, 2, 1);
     		autonomousCase++;
     		break;
-    	case 1: // Drive toward desired switch plate and arm
-    		if(m_DriveTrain.SwingAngleOnTarget())
-    		{
-    			m_DriveTrain.disableSwingPID();
-    			if(switchChar == 'L')
-    			{
-            		m_DriveTrain.DriveControlledAngle(-12*4.5, 8, 5, -30);
-    			}
-    			else
-    			{
-    				m_DriveTrain.DriveControlledAngle(-12*4, 8, 5, 30);
-    			}
-    			
-    			m_ThePult.Arm();
-    			m_Elevator.setPosition(kHigh);
-        		autonomousCase++;
-    		}
-    		break;
-    	case 2: // Swing to square up with switch plate
+    	case 1: // Turn based on the position of the switch 
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			if(switchChar == 'L')
-    			{
-        			m_DriveTrain.SetSwingParameters(0, true);
-    			}
-    			else
-    			{
-    				m_DriveTrain.SetSwingParameters(0, false);
-    			}
-    			m_DriveTrain.StartSwingTurn();
+    			m_DriveTrain.TurnToAngle(30*switchTurn);
     			autonomousCase++;
     		}
     		break;
-    	case 3: // Launch cube into switch with the short shot
-    		if(m_DriveTrain.SwingAngleOnTarget())
+    	case 2: // Drive to the switch
+    		if(m_DriveTrain.isTurnPIDFinished())
     		{
-    			m_DriveTrain.disableSwingPID();
-    			
-    			m_ThePult.Launch();
-    			
-    			autonomousWait = 0;
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.DriveDistance(100, 3.5, 1);
     			autonomousCase++;
     		}
     		break;
-    	case 4:
-    		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
+    	case 3: // Turn to square the robot with the switch
+    		if(m_DriveTrain.isStraightPIDFinished())
     		{
-    			m_ThePult.Arm();
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(-30*switchTurn);
     			autonomousCase++;
     		}
     		break;
-    	case 5:
+    	case 4: // Release powercube onto switch plate
+    		if(m_DriveTrain.isTurnPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.ArcadeDrive(0, 0);
+    			// Release / shoot cube onto the switch plate
+    			autonomousCase++;
+    		}
     		break;
+		default:
+			break;
     	}
     }
-     
-    //TODO Find actual distances/angles
-    public void scaleLeftRight()
+    
+    public void scaleSides()
     {
     	switch(autonomousCase)
     	{
@@ -512,392 +471,153 @@ public class Robot extends IterativeRobot
 	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
-    			m_DriveTrain.DriveDistance(-(19*12/*Decision Point*/ + 70.5/*Decision point to scale*/), 4, 1);
-    			m_Elevator.setPosition(kHigh);
+    			m_DriveTrain.DriveDistance(19*12 + 70.5, 4, 1);
     			autonomousCase = 8; // ******Jump to the end of the routine
     		break;
     	case 2: // Drive to the decision point
     		m_DriveTrain.DriveDistance(19*12, 4, 1);
-    		m_Elevator.setPosition(kHigh);
     		autonomousCase++;
     		break;
     	case 3: // Turn to cross the field
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
-        		if(scaleChar == 'R')
-        		{
-        			m_DriveTrain.SetSwingParameters(90, true);
-        		}
-        		else
-        		{
-        			m_DriveTrain.SetSwingParameters(-90, false);
-        		}
-        		m_DriveTrain.StartSwingTurn();
+        		m_DriveTrain.TurnToAngle(90*-scaleTurn); 
+        		// The turn is inverted in order to turn clockwise when scale is on right and counter clockwise when scale is on left 
+        		// This is the inverse of the above in the autonomous init
         		autonomousCase++;
     		}
     		break;
-    	case 4: // Cross the field
-    		if(m_DriveTrain.SwingAngleOnTarget())
-    			m_DriveTrain.disableSwingPID();
-    		if(scaleChar == 'R')
-    		{
-    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, 90);
-    		}
-    		else
-    		{
-    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, -90);
-    		}
-			autonomousCase++;
-    		break;
-    	case 5: // Turn to face scale
-    		if(m_DriveTrain.isStraightPIDFinished())
+    	case 4:
+    		if(m_DriveTrain.isTurnPIDFinished()) // Cross field
     		{
     			m_DriveTrain.DisablePIDControl();
-    			if(scaleChar == 'R')
-    			{
-    				m_DriveTrain.SetSwingParameters(0, false);
-    			}
-    			else
-    			{
-    				m_DriveTrain.SetSwingParameters(0, true);
-    			}
+    			m_DriveTrain.DriveDistance(15*12, 4, 2);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 5:
+    		if(m_DriveTrain.isStraightPIDFinished()) // Turn to face scale
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(90*scaleTurn);
     			autonomousCase++;
     		}
     		break;
     	case 6: // Finish turn PID and meet back up with the other decision path
-    		if(m_DriveTrain.SwingAngleOnTarget())
+    		if(m_DriveTrain.isTurnPIDFinished())
     		{
-    			m_DriveTrain.disableSwingPID();
+    			m_DriveTrain.DisablePIDControl();
     			autonomousCase++;
     		}
     		break;
     	case 7: // Drive up to scale from decision point or parallel decision point
-    		m_DriveTrain.DriveDistance(-70.5, 4, 1);
+    		m_DriveTrain.DriveDistance(70.5, 4, 1);
     		autonomousCase++;
     		break;
     	case 8: // Turn to face scale
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			
-    			if(scaleChar == 'R')
-    			{
-    				m_DriveTrain.SetSwingParameters(-30, false);
-    			}
-    			else
-    			{
-    				m_DriveTrain.SetSwingParameters(30, true);
-    			}
-    			m_DriveTrain.StartSwingTurn();
-    			m_ThePult.Arm();
+    			// TODO what is the actual angle
+    			m_DriveTrain.TurnToAngle(45*scaleTurn);
     			autonomousCase++;
     		}
     		break;
     	case 9: // Shoot powercube onto scale plate
-    		if(m_DriveTrain.SwingAngleOnTarget())
+    		if(m_DriveTrain.isTurnPIDFinished())
     		{
-    			m_DriveTrain.disableSwingPID();
-    			
-    			m_ThePult.Launch();
-        		autonomousCase++;
+    			m_DriveTrain.DisablePIDControl();
+    			// Shoot onto scale plate
     		}
-    		break;
-    	case 10:
-    		break;
     	}
     }
     
     public void scaleCenter()
     {
-    	// Scale R 	= 	-1
-    	// Scale L 	= 	 1
-    	//Switch R 	= 	 1
-    	//Switch L 	= 	-1
     	switch(autonomousCase)
     	{
-    	case 0: // Swing to move toward the desired scale
+    	case 0:
     		m_DriveTrain.ResetGyro();
-    		if (scaleTurn == -1) 
-    		{
-    			m_DriveTrain.SetSwingParameters(45, true);
-    		} 
-    		else 
-    		{
-    			m_DriveTrain.SetSwingParameters(-45, false);
-    		}
-    		
+    		m_DriveTrain.SetSwingParameters(45, true);
     		m_DriveTrain.StartSwingTurn();
     		autonomousCase++;
     		break;
-    	case 1: // Drive to prepare to run parallel with the wall
+    	case 1:
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			
-        		m_DriveTrain.DriveControlledAngle(-8*12, 8, 5, -45*scaleTurn);
-        		
-        		m_Elevator.setPosition(kHigh);
-        		
+        		m_DriveTrain.DriveControlledAngle(7*12, 8, 5, 45);
         		autonomousCase++;
     		}
     		break;
-    	case 2: // Swing to be parallel with the wall
+    	case 2:
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			if (scaleTurn == -1) 
-    			{
-    				m_DriveTrain.SetSwingParameters(0, false);
-    			} 
-    			else 
-    			{
-    				m_DriveTrain.SetSwingParameters(0, true);
-    			}
-    			
+    			m_DriveTrain.SetSwingParameters(0, false);
     			m_DriveTrain.StartSwingTurn();
     			autonomousCase++;
     		}
     		break;
-    	case 3: // Drive to scale
+    	case 3:
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_DriveTrain.DriveControlledAngle(-6*12, 6, 8, 0);
-    			
-    			m_ThePult.Arm();
-    			
+    			m_DriveTrain.DriveControlledAngle(5*12, 8, 5, 0);
     			autonomousCase++;
     		}
     		break;
-    	case 4: // Swing to align for shooting
+    	case 4:
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			
-    			if (scaleTurn == -1) 
-    			{
-    				m_DriveTrain.SetSwingParameters(-30, false);
-    			} 
-    			else 
-    			{
-    				m_DriveTrain.SetSwingParameters(30, true);
-    			}
+    			m_DriveTrain.SetSwingParameters(30, false);
     			m_DriveTrain.StartSwingTurn();
-    			autonomousCase++;
     		}
     		break;
-    	case 5: // Use the inferior siege engine
+    	case 5:
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_ThePult.Launch();
-    			autonomousCase++;
     		}
-    		break;
-    	case 6: // Determine if we want to go for the switch
-    		if(secondPart)
-    		{
-    			m_DriveTrain.disableSwingPID();
-    			autonomousCase = 99;
-    		} 
-    		else 
-    		{
-    			
-    			if (scaleTurn == -1) 
-    			{
-    				if (switchTurn == 1) 
-    				{
-    					m_DriveTrain.SetSwingParameters(45, false);
-    				} 
-    				else 
-    				{
-    					m_DriveTrain.SetSwingParameters(120, false);
-    				}
-    				
-    			} 
-    			else 
-    			{
-    				if (switchTurn == -1) 
-    				{
-    					m_DriveTrain.SetSwingParameters(-45, true);
-    				} 
-    				else 
-    				{
-    					m_DriveTrain.SetSwingParameters(-120, true);
-    				}
-    			}
-    			m_DriveTrain.StartSwingTurn();
-    			autonomousCase++;
-    			break;
-    		}
-    		break;
-    	case 7:
-    		if (m_DriveTrain.SwingAngleOnTarget()) 
-    		{
-    			m_ThePult.Arm();
-    			
-    			m_DriveTrain.DisablePIDControl();
-    			
-    			if (scaleTurn == -1) 
-    			{
-    				if (switchTurn == 1) 
-    				{
-    					m_DriveTrain.DriveControlledAngle(3 * 12, 5, 4, 45);
-    				} 
-    				else 
-    				{
-    					m_DriveTrain.DriveControlledAngle(8 * 12, 5, 10, 120);
-    				}
-    				
-    			} 
-    			else 
-    			{
-    				if (switchTurn == -1) 
-    				{
-    					m_DriveTrain.DriveControlledAngle(3 * 12, 5, 4, -45);
-    				} 
-    				else 
-    				{
-    					m_DriveTrain.DriveControlledAngle(8 * 12, 5, 10, -120);
-    				}
-    			}
-    			
-    			autonomousCase++;
-    		}
-    		break;
-    		
-    	case 8:
-    		if (m_DriveTrain.isStraightPIDFinished()) 
-    		{
-    			m_DriveTrain.DisablePIDControl();
-    			if (scaleTurn == -1) 
-    			{
-    				m_DriveTrain.SetSwingParameters(0, true);
-    			} 
-    			else 
-    			{
-    				m_DriveTrain.SetSwingParameters(0, false);
-    			}
-    			m_DriveTrain.StartSwingTurn();
-    			
-    			autonomousCase++;
-    		}
-    		break;
-    	case 9:
-    		if (m_DriveTrain.SwingAngleOnTarget()) 
-    		{
-    			m_DriveTrain.disableSwingPID();
-    			m_DriveTrain.DisablePIDControl();
-    			autonomousCase++;
-    		}
-    		break;
-    	case 10:
-    		m_DriveTrain.disableSwingPID();
-			m_DriveTrain.DisablePIDControl();
-    		m_DriveTrain.arcadeDrive(0, 0);
-    		break;
-    		
-    	case 99:
-    		m_DriveTrain.disableSwingPID();
-    		m_DriveTrain.DisablePIDControl();
-    		m_DriveTrain.arcadeDrive(0, 0);
     		break;
     	}
-    	
     }
     
-    public void worstCaseScenarioScaleLeftRightTest()
+    // Used solely to test the second portion of the scale first auton
+    // Starts on case 2 of the scaleFirst routine when the scale position and start position do not match
+    // End case matches case 5 of the scaleFirsr routine where the turn PID is ended in order to cleanly meet back up with the other decision path
+    public void tournamentWinner()
     {
     	switch(autonomousCase)
     	{
-    	case 0: // Turn to cross the field
-    		//if(m_DriveTrain.isStraightPIDFinished())
-    		//{
-        		if(scaleChar == 'R')
-        		{
-        			m_DriveTrain.SetSwingParameters(90, true);
-        		}
-        		else
-        		{
-        			m_DriveTrain.SetSwingParameters(-90, false);
-        		}
-        		m_DriveTrain.StartSwingTurn();
-        		autonomousCase++;
-    		//}
-    		break;
-    	case 1: // Cross the field
-    		if(m_DriveTrain.SwingAngleOnTarget())
-    		{
-    			m_DriveTrain.disableSwingPID();
-	    		if(scaleChar == 'R')
-	    		{
-	    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, 90);
-	    		}
-	    		else
-	    		{
-	    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, -90);
-	    		}
-				autonomousCase++;
-    		}
-    		break;
-    	case 2: // Turn to face scale
-    		if(m_DriveTrain.isStraightPIDFinished())
-    		{
-    			m_DriveTrain.DisablePIDControl();
-    			if(scaleChar == 'R')
-    			{
-    				m_DriveTrain.SetSwingParameters(0, false);
-    			}
-    			else
-    			{
-    				m_DriveTrain.SetSwingParameters(0, true);
-    			}
-    			m_DriveTrain.StartSwingTurn();
-    			autonomousCase++;
-    		}
-    		break;
-    	case 3: // Finish turn PID and meet back up with the other decision path
-    		if(m_DriveTrain.SwingAngleOnTarget())
-    		{
-    			m_DriveTrain.disableSwingPID();
-    			autonomousCase++;
-    		}
-    		break;
-    	case 4: // Drive up to scale from decision point or parallel decision point
-    		m_DriveTrain.DriveDistance(-70.5, 4, 1);
+    	case 0:
+    		m_DriveTrain.TurnToAngle(90*-scaleTurn);
     		autonomousCase++;
     		break;
-    	case 5: // Turn to face scale
-    		if(m_DriveTrain.isStraightPIDFinished())
+    	case 1:
+    		if(m_DriveTrain.isTurnPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			
-    			// TODO what is the actual angle
-    			if(scaleChar == 'R')
-    			{
-    				m_DriveTrain.SetSwingParameters(-30, false);
-    			}
-    			else
-    			{
-    				m_DriveTrain.SetSwingParameters(30, true);
-    			}
-    			m_DriveTrain.StartSwingTurn();
-    			
+    			m_DriveTrain.DriveDistance(15*12, 4, 2);
     			autonomousCase++;
     		}
     		break;
-    	case 6: // Shoot powercube onto scale plate
-    		if(m_DriveTrain.SwingAngleOnTarget())
+    	case 2:
+    		if(m_DriveTrain.isStraightPIDFinished())
     		{
-    			m_DriveTrain.disableSwingPID();
-    			
-    			m_ThePult.Launch();
-        		autonomousCase++;
+    			m_DriveTrain.DisablePIDControl();
+    			m_DriveTrain.TurnToAngle(90*scaleTurn);
+    			autonomousCase++;
     		}
     		break;
-    	case 7:
+    	case 3:
+    		if(m_DriveTrain.isTurnPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			autonomousCase++;
+    		}
     		break;
-    
     	}
     }
     
@@ -906,7 +626,6 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during operator control
          */
-    	m_Compressor.setClosedLoopControl(true);
     	
     	// For quick testing reset
     	if(autonomousCase != 0)
@@ -915,18 +634,64 @@ public class Robot extends IterativeRobot
     		m_DriveTrain.DisablePIDControl();
     	}
     	
-    	// Subsystem methods
-    	arcadeDrive();
-    	elevatorControl();
-    	intakeControl();
-    	catapultControl();
-    	rollerControl();
-    	
-    	// Other
-    	
-    	//Misc variable updates
     	GetDashboardData();
     	WriteDashboardData();
+    	
+    	arcadeDrive();
+//    	elevatorControl();
+    	intakeControl();
+    	catapultControl();
+    	
+    	m_DriveTrain.WriteDashboardData();
+    	
+    	//Shooter methods
+    	
+    	//Other
+      	record4LaterPlayback();
+    	
+    	//Misc variable updates
+    	
+    }
+    
+    public void record4LaterPlayback()
+    {
+	//Record for record playback
+    	//the statement in this "if" checks if a button you designate as your record button 
+    	//has been pressed, and stores the fact that it has been pressed in a variable
+    	System.out.println("Robot.record4LaterPlayback() m_RobotInterface.GetRecord()="+m_RobotInterface.GetRecord()+"  isRecording="+isRecording);
+    	if (m_RobotInterface.GetRecord()) 
+		{
+    		isRecording = true;
+		}  
+		//if our record button has been pressed, lets start recording!
+		if (isRecording)
+		{
+   		try
+    		{
+    			m_BTMacroRecord.record(m_RobotControllers);
+			}
+			catch (Exception e) 
+			{
+				e.printStackTrace();
+			}
+		}
+		
+  }    
+    
+public void disabledInit(){
+		//once we're done recording, the last thing we'll do is clean up the recording using the end
+		//function. more info on the end function is in the record class
+    	try 
+    	{
+    		if(m_BTMacroRecord != null)
+    		{
+    			m_BTMacroRecord.end();
+    		}
+		} 
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
     	
     }
 
@@ -951,83 +716,46 @@ public class Robot extends IterativeRobot
     	{
     	 	m_driveSpeed = 1.0;
     	}
-    	// - | +
-    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, m_RobotInterface.GetDriverRightX()*m_driveSpeed);
+    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, -m_RobotInterface.GetDriverRightX()*m_driveSpeed);
     	
    }
-    public void elevatorControl() {
-    	
-    	if (m_RobotInterface.GetOperatorButton(7) && !(m_Elevator.getPositionTarget() == kFloor)) 
-    	{
-    		m_Elevator.setPosition(kFloor);
-    	} 
-    	else if (m_RobotInterface.GetOperatorButton(8) && !(m_Elevator.getPositionTarget() == kTransfer)) 
-    	{
-    		m_Elevator.setPosition(kTransfer);
-    	} 
-    	//else if (m_RobotInterface.GetOperatorButton(9) && !(m_Elevator.getPositionTarget() == kHigh)) 
-    	//{
-    	//	m_Elevator.setPosition(kHigh);
-    	//} 
-    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
-    	{
-    		m_Elevator.disablePID();
-    		// Elevator power is halved to prevent damage to the elevator when manually controlled
-    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.5);
-    	}
-    	if (m_RobotInterface.GetOperatorButton(8)) {
-    		m_Elevator.setPosition(kTransfer);
-    		if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 1500 ) {
-    			m_Intake.IntakeCube();
-    		}
-    	}
-    }
+//    public void elevatorControl() {
+//    	
+//    	/*if (m_RobotInterface.GetOperatorA() && !(m_Elevator.getPositionTarget() == kFloor)) {
+//    		m_Elevator.setPosition(kFloor);
+//    	} else if (m_RobotInterface.GetOperatorB() && !(m_Elevator.getPositionTarget() == kTransfer)) {
+//    		m_Elevator.setPosition(kTransfer);
+//    	} else if (m_RobotInterface.GetOperatorX() && !(m_Elevator.getPositionTarget() == kHigh)) {
+//    		m_Elevator.setPosition(kHigh);
+//    	} else if (m_RobotInterface.GetOperatorY() && !(m_Elevator.getPositionTarget() == kLow)) {
+//    		m_Elevator.setPosition(kLow);
+//    	} else */
+//    	if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)) > .05) {
+//    		m_Elevator.disablePID();
+//    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(0)*.5);
+//   	}
+//    }
     public void intakeControl() {
-    	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) 
-    	{
+    	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) {
     		m_Intake.IntakeCube();
-    	} 
-    	else if (m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)) 
-    	{
+    	} else if (m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)) {
     		m_Intake.ReleaseCube();
-    	} 
-    	else if (m_RobotInterface.GetOperatorButton(6) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3))
-    	{
+    	} else if (m_RobotInterface.GetOperatorButton(6) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)){
     		m_Intake.RotateRight();
-    	} 
-    	else if (m_RobotInterface.GetOperatorButton(5) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3))
-    	{
+    	} else if (m_RobotInterface.GetOperatorButton(5) && !m_RobotInterface.GetOperatorButton(4) && !m_RobotInterface.GetOperatorButton(3)){
     		m_Intake.RotateLeft();
-    	} 
-    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
-    		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
-    	} 
-    	else 
-    	{
+    	} else {
     		m_Intake.StopIntake();
-    	}
-    	
-    	
-    	if(m_RobotInterface.GetOperatorButton(1) && m_Intake.getSolenoidState())
-    	{
-    		m_Intake.retractIntake();
-    	}
-    	else if(!m_RobotInterface.GetOperatorButton(1) && !m_Intake.getSolenoidState())
-    	{
-    		m_Intake.expandIntake();
     	}
     }
     public void catapultControl() {
     	
     	//Right Trigger - Fire - Start 2 second delay before rearming
     	
-    	if (m_RobotInterface.GetDriverRightTrigger() && m_catapultDelay == 0) 
-    	{
+    	if (m_RobotInterface.GetDriverRightTrigger() && m_catapultDelay == 0) {
     		m_ThePult.Launch();
     		m_catapultDelay = 100;
-    	} 
-    	else if (m_catapultDelay <= 0) 
-    	{
+    	} else if (m_catapultDelay <= 0) {
     		m_catapultDelay = 0;
     		m_ThePult.Arm();
     	}
@@ -1036,34 +764,6 @@ public class Robot extends IterativeRobot
     		m_catapultDelay--;
     	}
     	
-    }
-    public void rollerControl() {
-    	if (m_RobotInterface.GetOperatorButton(11)) {
-    		m_Roller.set(.80);
-    	} else if (m_RobotInterface.GetOperatorButton(12)) {
-    		m_Roller.set(-.80);
-    	} else {
-    		m_Roller.set(0.0);
-    	}
-    }
-    
-    public void switchCatapultShot()
-    {
-    	if(m_RobotInterface.GetDriverRightBumper() && isShotFinished)
-    	{
-    		isShotFinished = false;
-    		m_ThePult.Launch();
-    		m_shortCatapultDelay = 5;
-    	}
-    	else if(m_shortCatapultDelay <= 0)
-    	{
-    		isShotFinished = true;
-    		m_shortCatapultDelay = 0;
-    		m_ThePult.Arm();
-    	}
-    	
-    	if (m_shortCatapultDelay > 0)
-    		m_shortCatapultDelay--;
     }
     
     
@@ -1076,12 +776,58 @@ public class Robot extends IterativeRobot
     }
     public void WriteDashboardData()
     {
-    	SmartDashboard.putNumber("Auton Case", autonomousCase);
-    	SmartDashboard.putBoolean("isShotFinished", isShotFinished);
-    	SmartDashboard.putNumber("Switch Catapult Delay", m_shortCatapultDelay);
     	m_DriveTrain.WriteDashboardData();
-    	m_Elevator.WriteDashboardData();
-    	m_ThePult.WriteDashboardData();
-    	m_Intake.WriteDashboardData();
     }
+    
+    public static int getMaxRecorderFileNumber()
+    {
+    	int intToReturn = 0;
+		//create a scanner to read the file created during BTMacroRecord
+		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
+		File fileMaxNumber = new File(Robot.recorderFileMaxNumber);
+		try
+		{
+			Scanner scannerMaxNumber = new Scanner(fileMaxNumber);
+		
+			//let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
+			scannerMaxNumber.useDelimiter(",|\\n");
+		
+			if (scannerMaxNumber.hasNextInt())
+			{
+				intToReturn = scannerMaxNumber.nextInt();
+			}
+			else{
+				intToReturn = 0;
+			}
+			scannerMaxNumber.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
+		}
+		return intToReturn;
+    }
+		
+	public static int getNextRecorderFileNumber()
+	{
+		int intToReturn;
+		// increment to next unused number
+		intToReturn = getMaxRecorderFileNumber() + 1;
+		try{
+			System.out.print("NextRecorderFileNumber"+intToReturn);
+		    boolean OVER_WRITE = false;
+//		    boolean APPEND = true;
+			FileWriter writerForAutoFileNumber = new FileWriter(Robot.recorderFileMaxNumber, OVER_WRITE);
+			writerForAutoFileNumber.append(intToReturn + "\n"); 
+			writerForAutoFileNumber.flush();
+			writerForAutoFileNumber.close();
+		}
+		catch(Exception e){
+			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
+		}
+			
+		return intToReturn;
+	}
+	
+    
 }
