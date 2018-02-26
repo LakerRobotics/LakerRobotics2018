@@ -22,15 +22,15 @@ import edu.wpi.first.wpilibj.Talon;
 
 public class RobotControllerMap
 {
-	private final int leftDrive1PWM 	= 7;
-	private final int leftDrive2PWM 	= 8;
-	private final int rightDrive1PWM 	= 3;
-	private final int rightDrive2PWM 	= 4;
+	private final int leftDrive1PWM 	= RobotConstants.getLeftDrivePWM1();
+	private final int leftDrive2PWM 	= RobotConstants.getLeftDrivePWM2();
+	private final int rightDrive1PWM 	= RobotConstants.getRightDrivePWM1();
+	private final int rightDrive2PWM 	= RobotConstants.getRightDrivePWM2();
+	private final int elevatorCAN 		= RobotConstants.getElevatorPWM();
 	private final int intakeLeftPWM 	= 0;
 	private final int intakeRightPWM 	= 1;
 	private final int rollerPWM = 6;
-	
-	private final int elevatorCAN = 1;
+	private final int catapultSolenoidSlot = 0;
 	
 	private final int catapultLeftExpandSolenoidSlot 	= 0;
 	private final int catapultLeftRetractSolenoidSlot 	= 1;
@@ -38,7 +38,6 @@ public class RobotControllerMap
 	private final int catapultRightRetractSolenoidSlot 	= 3;
 	private final int intakeExpandSolenoidSlot			= 4;
 	private final int intakeRetractSolenoidSlot 		= 5;
-	
 
 	private Talon m_LeftDrive1;
 	private Talon m_LeftDrive2;
@@ -67,12 +66,12 @@ public class RobotControllerMap
 		m_LeftDrive1 = new Talon(leftDrive1PWM);
 		m_LeftDrive2 = new Talon(leftDrive2PWM);
 		m_LeftDrive = new SpeedControllerGroup(m_LeftDrive1, m_LeftDrive2);
-		m_LeftDrive.setInverted(false); // True
+		m_LeftDrive.setInverted(RobotConstants.getLeftDriveInverted());
 		
 		m_RightDrive1 = new Talon(rightDrive1PWM);
 		m_RightDrive2 = new Talon(rightDrive2PWM);
 		m_RightDrive = new SpeedControllerGroup(m_RightDrive1, m_RightDrive2);
-		m_RightDrive.setInverted(false); // True
+		m_RightDrive.setInverted(RobotConstants.getRightDriveInverted());
 		
 		m_Elevator = new TalonSRX(elevatorCAN);
 		m_Elevator.setInverted(false);

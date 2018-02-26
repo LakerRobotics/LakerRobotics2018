@@ -1,28 +1,29 @@
 package org.usfirst.frc.team5053.robot.Constants;
 
-public class RobotValuesLilGeek extends RobotValues {
-	
+public class RobotValuesLisa extends RobotValues 
+{
 	public int getLeftDrivePWM1()
-	{ 
-		return 2;
+	{
+		return 7;
 	}
 	public int getLeftDrivePWM2()
-	{ 
-		return 3;
+	{
+		return 8;
 	}
 	public int getRightDrivePWM1()
-	{ 
-		return 0; 
+	{
+		return 3;
 	}
 	public int getRightDrivePWM2()
-	{ 
-		return 1;
-	}
-	public int getElevatorPWM()
 	{
 		return 4;
 	}
+	public int getElevatorPWM()
+	{
+		return 2;
+	}
 
+	
 	public boolean getLeftDriveInverted()
 	{
 		return true;
@@ -45,6 +46,6 @@ public class RobotValuesLilGeek extends RobotValues {
 	
 	public double getEncoderDistancePerPulse()
 	{
-		return 6*Math.PI/360;
+		return 6*Math.PI/1024;
 	}
 }
