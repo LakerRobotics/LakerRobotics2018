@@ -165,7 +165,7 @@ public class BTMacroPlay {
 		
 	}
 	
-	boolean isDone() {return done;};
+	public boolean isDone() {return done;};
 			
 	//stop motors and end playing the recorded file
 	public void end(RobotControllerMap theRobotControllerMap)

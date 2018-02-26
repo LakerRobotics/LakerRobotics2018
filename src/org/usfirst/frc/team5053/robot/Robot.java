@@ -109,6 +109,7 @@ public class Robot extends IterativeRobot
 	// Record Playback
 	BTMacroRecord m_BTMacroRecord;
 	BTMacroPlay m_BTMacroPlay;
+	BTMacroPlay m_PlaybackScaleToSwitch;
 	
 	boolean isRecording = false;
 	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
@@ -174,8 +175,6 @@ public class Robot extends IterativeRobot
     }
     
     
-    
-    
 	@Override
 	public void teleopInit(){
 		isRecording= false;
@@ -195,13 +194,6 @@ public class Robot extends IterativeRobot
     	 /**
          * This function is called once when autonomous begins
          */
-        // Record Playback
-    	try{
-			m_BTMacroPlay = new BTMacroPlay(); // note this should initalize the file open to read from
-		}
-		catch(Exception e){
-			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
-		}
          
     	
     	// Initialize autonomous variables
@@ -227,6 +219,38 @@ public class Robot extends IterativeRobot
     		scaleTurn = -1; // Final turn is always Counter clockwise when the scale is on the right side
     	else
     		scaleTurn = 1; // And vice versa
+    		
+   		// Record Playback
+    	int AfterScaleRightShotToRightSwitch = 1;	        
+    	int AfterScaleRightShotToLeftSwitch = 1;	        
+    	int AfterScaleLeftShotToRightSwitch = 1;	        
+    	int AfterScaleLeftShotToLeftSwitch = 1;	        
+    	try{
+    		// This is playback lates record
+    		m_BTMacroPlay = new BTMacroPlay(); // note this should initalize the file open to read from
+    				
+    	// This sets up the movement from the Scale shot to the switch shot  
+    	if(scaleChar == 'R'){
+    		if(switchChar == 'R'){
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleRightShotToRightSwitch);
+    	    }
+    		else{
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleRightShotToLeftSwitch);    	
+    		}
+    	}else{ // was Left scale
+    		if(switchChar == 'R'){
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleLeftShotToRightSwitch);
+    	    }
+    		else{
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleLeftShotToLeftSwitch);    	
+    		}
+    	
+    	}
+		}
+		catch(Exception e){
+			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
+    		
     	
     	m_DriveTrain.ResetGyro();
     	m_DriveTrain.ResetEncoders();
@@ -235,7 +259,7 @@ public class Robot extends IterativeRobot
 
     public void autonomousPeriodic()
     {
-    	boolean debug_record_playback = true;
+    	boolean debug_record_playback = false;
     	if(debug_record_playback){
     		m_BTMacroPlay.play(m_RobotControllers);
     	}
@@ -657,7 +681,16 @@ public class Robot extends IterativeRobot
         		autonomousCase++;
     		}
     		break;
-    	case 10:
+    	case 10:// Go do the Switch
+    		if(!m_PlaybackScaleToSwitch.isDone()){
+    			m_PlaybackScaleToSwitch.play(m_RobotControllers);
+    		}
+    		else{
+        		autonomousCase++;
+    		}
+    		break;
+    	case 11:
+    	
     		break;
     	}
     }
