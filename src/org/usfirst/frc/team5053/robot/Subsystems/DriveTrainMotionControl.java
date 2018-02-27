@@ -26,6 +26,8 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	 * Hello There! : I'm the base constructor.
 	 */
 
+	boolean debug = false; //tells is debug prints should be printing or not
+
 	private Encoder m_LeftEncoder;
 	private Encoder m_RightEncoder;
 	
@@ -43,7 +45,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 	private double m_Speed = 0.0;
 	private double m_Turn = 0.0;
 	private double m_swingTurnValue = 0.0;
-	private boolean m_swingTurnRight = false;
+	private boolean m_swingTurnLeft = false;
 	private final double SWING_TOLERANCE = 1.0;
 	
 	public DriveTrainMotionControl(SpeedControllerGroup leftMotorGroup, SpeedControllerGroup rightMotorGroup, Encoder leftEncoder, Encoder rightEncoder, ADXRS450_Gyro gyro)
@@ -57,7 +59,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_Gyro = gyro;
 		
-		m_MotionController = new MotionController(this, (PIDSource) m_LeftEncoder, (PIDSource) m_Gyro);
+		m_MotionController = new MotionController(this, (PIDSource) m_RightEncoder, (PIDSource) m_Gyro);
 		
 		m_AnglePIDWrapper = new AnglePIDWrapper(this);
 		m_AnglePID = new PIDController(0.1, 0.0, 0.0, m_AnglePIDWrapper, m_AnglePIDWrapper);
@@ -65,7 +67,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_SwingPIDWrapper = new SwingPIDWrapper(this);
 		
-		m_SwingPID = new PIDController(0.07, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
+		m_SwingPID = new PIDController(0.05, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
 		m_SwingPID.setOutputRange(-0.75, 0.75);
 		m_SwingPID.setAbsoluteTolerance(SWING_TOLERANCE);
 	}
@@ -223,28 +225,29 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 			}
 			return true;
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
+			if(debug) System.out.println("DriveTrainMotionControl.StartSwingTurn Exception "+ex.getMessage());
 		}
-		return false;
-		
+		return false;		
 	}
-	public boolean SetSwingParameters(double angle, boolean isRight) {
+	
+	public boolean SetSwingParameters(double angle, boolean isLeft) {
 		try {
 			m_SwingPID.setSetpoint(angle);
-			m_swingTurnRight = isRight;
+			m_swingTurnLeft = isLeft;
 			
 			return true;
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
+			System.out.println( "DriveTrainMotionControl.SetSwingParameters Exception " + ex.getMessage());
 		}
 		return false;
 	}
+	
 	public void SwingTurn(double turnSpeed) {
 		m_swingTurnValue = turnSpeed;
+
+		if(debug) System.out.println("Swing turn speed: " + turnSpeed);
 		
-		System.out.println("Swing turn speed: " + turnSpeed);
-		
-		if (m_swingTurnRight) 
+		if (m_swingTurnLeft) 
 		{
 			this.tankDrive(0, turnSpeed);
 		} 
