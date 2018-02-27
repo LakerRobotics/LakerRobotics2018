@@ -1,10 +1,5 @@
 package org.usfirst.frc.team5053.robot;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-
 import org.usfirst.frc.team5053.robot.RobotInterfaceMap.JoystickType;
 import org.usfirst.frc.team5053.robot.Sensors.LidarLite;
 import org.usfirst.frc.team5053.robot.Subsystems.Catapult;
@@ -20,9 +15,6 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import org.usfirst.frc.team5053.robot.record_playback.BTMacroRecord;
-import org.usfirst.frc.team5053.robot.record_playback.BTMacroPlay;
 
 
 /**
@@ -106,18 +98,6 @@ public class Robot extends IterativeRobot
 	private double[] diagnosticPowerSent;
 	private int arrIndex;
 	
-	// Record Playback
-	BTMacroRecord m_BTMacroRecord;
-	BTMacroPlay m_BTMacroPlay;
-	BTMacroPlay m_PlaybackScaleToSwitch;
-	
-	boolean isRecording = false;
-	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
-	//few different auto programs
-		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
-		//autoFile is a global constant that keeps you from recording into a different file than the one you play from
-		public static final String autoFile = new String("/home/lvuser/recordedAuto");
-		public static final String recorderFileMaxNumber = new String("/home/lvuser/recorderMaxNumber.csv");
 	
 	
 	//Misc variables
@@ -173,28 +153,12 @@ public class Robot extends IterativeRobot
     	arrIndex = 0;
     	
     }
-    
-    
-	@Override
-	public void teleopInit(){
-		isRecording= false;
-    	// Record Playback
-    	try{
-    		m_BTMacroRecord = new BTMacroRecord();
-		}
-		catch(Exception e){
-			System.out.print("Robot.teleopInit() Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
-		}
 
-	}
-
-	@Override
     public void autonomousInit() 
     {
     	 /**
          * This function is called once when autonomous begins
          */
-         
     	
     	// Initialize autonomous variables
     	autonomousCase = 0;
@@ -219,38 +183,6 @@ public class Robot extends IterativeRobot
     		scaleTurn = -1; // Final turn is always Counter clockwise when the scale is on the right side
     	else
     		scaleTurn = 1; // And vice versa
-    		
-   		// Record Playback
-    	int AfterScaleRightShotToRightSwitch = 1;	        
-    	int AfterScaleRightShotToLeftSwitch = 1;	        
-    	int AfterScaleLeftShotToRightSwitch = 1;	        
-    	int AfterScaleLeftShotToLeftSwitch = 1;	        
-    	try{
-    		// This is playback lates record
-    		m_BTMacroPlay = new BTMacroPlay(); // note this should initalize the file open to read from
-    				
-    	// This sets up the movement from the Scale shot to the switch shot  
-    	if(scaleChar == 'R'){
-    		if(switchChar == 'R'){
-				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleRightShotToRightSwitch);
-    	    }
-    		else{
-				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleRightShotToLeftSwitch);    	
-    		}
-    	}else{ // was Left scale
-    		if(switchChar == 'R'){
-				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleLeftShotToRightSwitch);
-    	    }
-    		else{
-				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleLeftShotToLeftSwitch);    	
-    		}
-    	
-    	}
-		}
-		catch(Exception e){
-			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
-		}
-    		
     	
     	m_DriveTrain.ResetGyro();
     	m_DriveTrain.ResetEncoders();
@@ -259,12 +191,6 @@ public class Robot extends IterativeRobot
 
     public void autonomousPeriodic()
     {
-    	boolean debug_record_playback = false;
-    	if(debug_record_playback){
-    		m_BTMacroPlay.play(m_RobotControllers);
-    	}
-    	else
-    	{
 		
     	/**
          * This function is called periodically during autonomous
@@ -304,19 +230,14 @@ public class Robot extends IterativeRobot
     		//controlledAngleTest();
     		//turnTest();
     		break;
-    	case "playback":
-    		m_BTMacroPlay.play(m_RobotControllers);
-    		break;
 		default: // NO AUTON
 			break;
-    	}
     	}
     	
     	GetDashboardData();
     	WriteDashboardData();
     	
     	autonomousWait++;
-    	
     }
     
     public void controlledAngleTest()
@@ -681,16 +602,7 @@ public class Robot extends IterativeRobot
         		autonomousCase++;
     		}
     		break;
-    	case 10:// Go do the Switch
-    		if(!m_PlaybackScaleToSwitch.isDone()){
-    			m_PlaybackScaleToSwitch.play(m_RobotControllers);
-    		}
-    		else{
-        		autonomousCase++;
-    		}
-    		break;
-    	case 11:
-    	
+    	case 10:
     		break;
     	}
     }
@@ -1011,53 +923,10 @@ public class Robot extends IterativeRobot
     	rollerControl();
     	
     	// Other
-      	record4LaterPlayback();
-      	
+    	
     	//Misc variable updates
     	GetDashboardData();
     	WriteDashboardData();
-    	
-    }
-    
-    public void record4LaterPlayback()
-    {
-	//Record for record playback
-    	//the statement in this "if" checks if a button you designate as your record button 
-    	//has been pressed, and stores the fact that it has been pressed in a variable
-    	System.out.println("Robot.record4LaterPlayback() m_RobotInterface.GetRecord()="+m_RobotInterface.GetRecord()+"  isRecording="+isRecording);
-    	if (m_RobotInterface.GetRecord()) 
-		{
-    		isRecording = true;
-		}  
-		//if our record button has been pressed, lets start recording!
-		if (isRecording)
-		{
-   		try
-    		{
-    			m_BTMacroRecord.record(m_RobotControllers);
-			}
-			catch (Exception e) 
-			{
-				e.printStackTrace();
-			}
-		}
-		
-  }    
-    
-public void disabledInit(){
-		//once we're done recording, the last thing we'll do is clean up the recording using the end
-		//function. more info on the end function is in the record class
-    	try 
-    	{
-    		if(m_BTMacroRecord != null)
-    		{
-    			m_BTMacroRecord.end();
-    		}
-		} 
-		catch (Exception e) 
-		{
-			e.printStackTrace();
-		}
     	
     }
 
@@ -1215,56 +1084,4 @@ public void disabledInit(){
     	m_ThePult.WriteDashboardData();
     	m_Intake.WriteDashboardData();
     }
-    
-    public static int getMaxRecorderFileNumber()
-    {
-    	int intToReturn = 0;
-		//create a scanner to read the file created during BTMacroRecord
-		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
-		File fileMaxNumber = new File(Robot.recorderFileMaxNumber);
-		try
-		{
-			Scanner scannerMaxNumber = new Scanner(fileMaxNumber);
-		
-			//let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
-			scannerMaxNumber.useDelimiter(",|\\n");
-		
-			if (scannerMaxNumber.hasNextInt())
-			{
-				intToReturn = scannerMaxNumber.nextInt();
-			}
-			else{
-				intToReturn = 0;
-			}
-			scannerMaxNumber.close();
-		}
-		catch(Exception e)
-		{
-			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
-		}
-		return intToReturn;
-    }
-		
-	public static int getNextRecorderFileNumber()
-	{
-		int intToReturn;
-		// increment to next unused number
-		intToReturn = getMaxRecorderFileNumber() + 1;
-		try{
-			System.out.print("NextRecorderFileNumber"+intToReturn);
-		    boolean OVER_WRITE = false;
-//		    boolean APPEND = true;
-			FileWriter writerForAutoFileNumber = new FileWriter(Robot.recorderFileMaxNumber, OVER_WRITE);
-			writerForAutoFileNumber.append(intToReturn + "\n"); 
-			writerForAutoFileNumber.flush();
-			writerForAutoFileNumber.close();
-		}
-		catch(Exception e){
-			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
-		}
-			
-		return intToReturn;
-	}
-	
-    
 }
