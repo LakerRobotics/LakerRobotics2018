@@ -17,9 +17,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  *
  */
 public class MotionControlHelper {
-
-	boolean debug = false; // tells if debug prints should print or not
-	
 	double m_targetDistance         = 0.0d; // in distance units for example inches or Degrees of rotation
 	double m_rampUpRampDownDistance = 0.0d; // in distance units for example inches or Degrees of roation
     double m_runningSpeed           = 0.0d; // distance (e.g. inchs or Degrees of rotation) over seconds	
@@ -144,7 +141,7 @@ public class MotionControlHelper {
        SmartDashboard.putNumber("targetSpeed",targetSpeed);
        
        SmartDashboard.putNumber("getTargetSpeed MotionControlHelper", targetSpeed);
-       if(debug) System.out.println("getTargetSpeed MotionControlHelper: " + Double.toString(targetSpeed));
+       System.out.println("getTargetSpeed MotionControlHelper: " + Double.toString(targetSpeed));
        return targetSpeed;
     }
     
