@@ -135,6 +135,7 @@ public class Robot extends IterativeRobot
 	private int m_shortCatapultDelay = 0;
 	private boolean isShotFinished = true;
 	private boolean hasElevatorEncoderZeroed = false;
+	private final String m_robotName = RobotConstants.getRobotName();
 	
 	@Override
     public void robotInit()
@@ -150,19 +151,26 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorLimitHigh(), m_RobotSensors.getElevatorLimitLow());
-    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
-    	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
-    	m_Roller = m_RobotControllers.getRoller();
+    	if (m_robotName == "lisa") {
+    		m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorLimitHigh(), m_RobotSensors.getElevatorLimitLow());
+        	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
+        	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
+        	m_Roller = m_RobotControllers.getRoller();
+        	
+        	CameraServer server = CameraServer.getInstance();
+        	server.startAutomaticCapture();
+        	
+        	
+        	m_Compressor = new Compressor(0);
+
+        	//m_Compressor.start();
+        	m_Compressor.setClosedLoopControl(true);
+    	}
+    	
     	// Scaler
     	
-    	CameraServer server = CameraServer.getInstance();
-    	server.startAutomaticCapture();
     	
-    	m_Compressor = new Compressor(0);
-
-    	//m_Compressor.start();
-    	m_Compressor.setClosedLoopControl(true);
+    	
     	
     	// Diagnostic variable initialization
     	//m_NetworkTable =  NetworkTable.getTable("SmartDashboard");
@@ -254,7 +262,9 @@ public class Robot extends IterativeRobot
     	
     	m_DriveTrain.ResetGyro();
     	m_DriveTrain.ResetEncoders();
-    	m_Elevator.resetEncoder();
+    	if (m_robotName == "lisa") {
+    		m_Elevator.resetEncoder();
+    	}
     }
 
     public void autonomousPeriodic()
@@ -269,13 +279,16 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during autonomous
          */
-    	if (!hasElevatorEncoderZeroed) {
-    		m_Elevator.manualControl(-.30);
-    	}
-    	if (m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
-    		m_Elevator.resetEncoder();
-    		hasElevatorEncoderZeroed = true;
-    	}
+    		if (m_robotName == "lisa") {
+    			if (!hasElevatorEncoderZeroed) {
+    	    		m_Elevator.manualControl(-.30);
+    	    	}
+    	    	if (m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
+    	    		m_Elevator.resetEncoder();
+    	    		hasElevatorEncoderZeroed = true;
+    	    	}
+    		}
+    	
     	switch(autonRoutine.toLowerCase())
     	{
     	case "none": // NO AUTON
@@ -298,11 +311,13 @@ public class Robot extends IterativeRobot
 			diagnosticTest();
 			break;
     	case "test":
-    		switchShotTest();
+    		//switchShotTest();
     		//swingTest();
-    		//straightTest();
+    		straightTest();
     		//controlledAngleTest();
     		//turnTest();
+    		//switchCenter();
+    		worstCaseScenarioScaleLeftRightTest();
     		break;
     	case "playback":
     		m_BTMacroPlay.play(m_RobotControllers);
@@ -411,24 +426,27 @@ public class Robot extends IterativeRobot
     }
     public void switchShotTest()
     {
-    	switch(autonomousCase)
-    	{
-        case 0: // Launch cube into switch with the short shot
-    		m_ThePult.Launch();
-    			
-			autonomousWait = 0;
-			autonomousCase++;
-			break;
-    	case 1:
-    		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
-    		{
-    			m_ThePult.Arm();
-        		autonomousCase++;
-    		}
-    		break;
-    	case 2:
-    		break;
+    	if (m_robotName == "lisa") {
+    		switch(autonomousCase)
+        	{
+            case 0: // Launch cube into switch with the short shot
+        		m_ThePult.Launch();
+        			
+    			autonomousWait = 0;
+    			autonomousCase++;
+    			break;
+        	case 1:
+        		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
+        		{
+        			m_ThePult.Arm();
+            		autonomousCase++;
+        		}
+        		break;
+        	case 2:
+        		break;
+        	}
     	}
+    	
     }
     
     public void diagnosticTest()
@@ -535,8 +553,11 @@ public class Robot extends IterativeRobot
     				m_DriveTrain.DriveControlledAngle(-12*4, 8, 5, 30);
     			}
     			
-    			m_ThePult.Arm();
-    			m_Elevator.setPosition(kHigh);
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    				m_Elevator.setPosition(kHigh);
+    			}
+    			
         		autonomousCase++;
     		}
     		break;
@@ -561,7 +582,9 @@ public class Robot extends IterativeRobot
     		{
     			m_DriveTrain.disableSwingPID();
     			
-    			m_ThePult.Launch();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Launch();
+    			}
     			
     			autonomousWait = 0;
     			autonomousCase++;
@@ -570,7 +593,9 @@ public class Robot extends IterativeRobot
     	case 4:
     		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
     		{
-    			m_ThePult.Arm();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    			}
     			autonomousCase++;
     		}
     		break;
@@ -592,12 +617,16 @@ public class Robot extends IterativeRobot
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
     			m_DriveTrain.DriveDistance(-(19*12/*Decision Point*/ + 70.5/*Decision point to scale*/), 4, 1);
-    			m_Elevator.setPosition(kHigh);
+    			if (m_robotName == "lisa") {
+    				m_Elevator.setPosition(kHigh);
+    			}
     			autonomousCase = 8; // ******Jump to the end of the routine
     		break;
     	case 2: // Drive to the decision point
-    		m_DriveTrain.DriveDistance(19*12, 4, 1);
-    		m_Elevator.setPosition(kHigh);
+    		m_DriveTrain.DriveDistance(-19*12, 4, 1);
+    		if (m_robotName == "lisa") {
+    			m_Elevator.setPosition(kHigh);
+    		}
     		autonomousCase++;
     		break;
     	case 3: // Turn to cross the field
@@ -724,7 +753,9 @@ public class Robot extends IterativeRobot
     			
         		m_DriveTrain.DriveControlledAngle(-8*12, 8, 5, -45*scaleTurn);
         		
-        		m_Elevator.setPosition(kHigh);
+        		if (m_robotName == "lisa") {
+        			m_Elevator.setPosition(kHigh);
+        		}
         		
         		autonomousCase++;
     		}
@@ -752,7 +783,10 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
     			m_DriveTrain.DriveControlledAngle(-6*12, 6, 8, 0);
     			
-    			m_ThePult.Arm();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    			}
+    			
     			
     			autonomousCase++;
     		}
@@ -778,7 +812,9 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_ThePult.Launch();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Launch();
+    			}
     			autonomousCase++;
     		}
     		break;
@@ -822,7 +858,9 @@ public class Robot extends IterativeRobot
     	case 7:
     		if (m_DriveTrain.SwingAngleOnTarget()) 
     		{
-    			m_ThePult.Arm();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    			}
     			
     			m_DriveTrain.DisablePIDControl();
     			
@@ -919,11 +957,11 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
 	    		if(scaleChar == 'R')
 	    		{
-	    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, 90);
+	    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, 90);
 	    		}
 	    		else
 	    		{
-	    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, -90);
+	    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, -90);
 	    		}
 				autonomousCase++;
     		}
@@ -979,7 +1017,10 @@ public class Robot extends IterativeRobot
     		{
     			m_DriveTrain.disableSwingPID();
     			
-    			m_ThePult.Launch();
+    			
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Launch();
+    			}
         		autonomousCase++;
     		}
     		break;
@@ -994,7 +1035,9 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during operator control
          */
-    	m_Compressor.setClosedLoopControl(true);
+    	if (m_robotName == "lisa") {
+    		m_Compressor.setClosedLoopControl(true);
+    	}
     	
     	// For quick testing reset
     	if(autonomousCase != 0)
@@ -1005,10 +1048,13 @@ public class Robot extends IterativeRobot
     	
     	// Subsystem methods
     	arcadeDrive();
-    	elevatorControl();
-    	intakeControl();
-    	catapultControl();
-    	rollerControl();
+    	if (m_robotName == "lisa") {
+    		elevatorControl();
+        	intakeControl();
+        	catapultControl();
+        	rollerControl();
+    	}
+    	
     	
     	// Other
       	record4LaterPlayback();
@@ -1083,7 +1129,7 @@ public void disabledInit(){
     	 	m_driveSpeed = 1.0;
     	}
     	// - | +
-    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, m_RobotInterface.GetDriverRightX()*m_driveSpeed);
+    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, RobotConstants.getArcadeDriveInverted() * m_RobotInterface.GetDriverRightX()*m_driveSpeed );
     	
    }
     public void elevatorControl() {
@@ -1210,10 +1256,14 @@ public void disabledInit(){
     	SmartDashboard.putNumber("Auton Case", autonomousCase);
     	SmartDashboard.putBoolean("isShotFinished", isShotFinished);
     	SmartDashboard.putNumber("Switch Catapult Delay", m_shortCatapultDelay);
+    	
     	m_DriveTrain.WriteDashboardData();
-    	m_Elevator.WriteDashboardData();
-    	m_ThePult.WriteDashboardData();
-    	m_Intake.WriteDashboardData();
+    	if (m_robotName == "lisa") {
+    		m_Elevator.WriteDashboardData();
+        	m_ThePult.WriteDashboardData();
+        	m_Intake.WriteDashboardData();
+    	}
+    	
     }
     
     public static int getMaxRecorderFileNumber()

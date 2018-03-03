@@ -1,22 +1,24 @@
 package org.usfirst.frc.team5053.robot.Constants;
 
 public class RobotValuesLilGeek extends RobotValues {
-	
+	public String getRobotName() {
+		return "lilgeek";
+	}
 	public int getLeftDrivePWM1()
 	{ 
-		return 0;
+		return 2;
 	}
 	public int getLeftDrivePWM2()
 	{ 
-		return 1;
+		return 3;
 	}
 	public int getRightDrivePWM1()
 	{ 
-		return 2; 
+		return 0; 
 	}
 	public int getRightDrivePWM2()
 	{ 
-		return 3;
+		return 1;
 	}
 	public int getElevatorPWM()
 	{
@@ -37,11 +39,11 @@ public class RobotValuesLilGeek extends RobotValues {
 
 	public boolean getLeftDriveInverted()
 	{
-		return true;
+		return false;
 	}
 	public boolean getRightDriveInverted()
 	{
-		return true;
+		return false;
 	}
 	
 	
@@ -51,7 +53,7 @@ public class RobotValuesLilGeek extends RobotValues {
 	}
 	public boolean getRightEncoderInverted()
 	{
-		return true;
+		return false;
 	}
 	
 	
@@ -66,6 +68,6 @@ public class RobotValuesLilGeek extends RobotValues {
 	}
 	public int rotationControllerInverted()
 	{
-		return -1;
+		return 1;
 	}
 }

@@ -20,6 +20,9 @@ public class RobotConstants
     		robotWeAreRunningOn = new RobotValuesLilGeek();
     	}
 	}
+	public static String getRobotName() {
+		return robotWeAreRunningOn.getRobotName();
+	}
 
 	//???
 	public static boolean getRightDriveInverted()

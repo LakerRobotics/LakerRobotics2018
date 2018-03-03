@@ -6,6 +6,7 @@ package org.usfirst.frc.team5053.robot.Constants;
  */
 public abstract class RobotValues {
 
+	public String getRobotName() {return "Lilgeek";}
 	public boolean getLeftDriveInverted() {return false;}
 	public boolean getRightDriveInverted(){return false;}
 	

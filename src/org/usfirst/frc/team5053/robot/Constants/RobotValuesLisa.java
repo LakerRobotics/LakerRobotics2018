@@ -2,6 +2,9 @@ package org.usfirst.frc.team5053.robot.Constants;
 
 public class RobotValuesLisa extends RobotValues 
 {
+	public String getRobotName() {
+		return "lisa";
+	}
 	public int getLeftDrivePWM1()
 	{
 		return 7;
