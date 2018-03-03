@@ -23,7 +23,7 @@ public class RobotValuesLisa extends RobotValues
 	}
 	public int getElevatorPWM()
 	{
-		return 2;
+		return 1;
 	}
 	public int getRightIntakePWM()
 	{
@@ -41,11 +41,11 @@ public class RobotValuesLisa extends RobotValues
 	
 	public boolean getLeftDriveInverted()
 	{
-		return true;
+		return false;
 	}
 	public boolean getRightDriveInverted()
 	{
-		return true;
+		return false;
 	}
 	
 	
@@ -69,6 +69,6 @@ public class RobotValuesLisa extends RobotValues
 	}
 	public int arcadeDriveRotationInverted()
 	{
-		return -1;
+		return 1;
 	}
 }

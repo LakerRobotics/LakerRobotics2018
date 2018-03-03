@@ -43,12 +43,14 @@ public class Elevator implements Subsystem {
 	public void manualControl(double speed)
 	{
 		// Runs at half speed for manual control
-		if (speed > 0 && m_LimitHigh.get()) {
+		if (speed < 0 && !m_LimitHigh.get()) {
 			speed = 0;
-		} else if (speed < 0 && m_LimitLow.get()) {
+		} else if (speed > 0 && !m_LimitLow.get()) {
 			speed = 0;
 		}
 		
+		System.out.println("Limit High: " + m_LimitHigh.get());
+		System.out.println("Limit Low: " + m_LimitLow.get());
 		m_Talon.set(ControlMode.PercentOutput, speed);
 	}
 	public boolean getLimitHigh() {

@@ -30,9 +30,9 @@ public class RobotSensorMap
 	private final int rightDriveEncoderADIO = 3; //2
 	private final int rightDriveEncoderBDIO = 2; //3
 	private final int elevatorEncoderADIO = 4;
-	private final int elevatorEncoderBDIO = 5;
-	private final int elevatorLimitHighDIO = 6;
-	private final int elevatorLimitLowDIO = 7;
+	private final int elevatorEncoderBDIO = 7;
+	private final int elevatorLimitHighDIO = 5;
+	private final int elevatorLimitLowDIO = 6;
 	
 	
 	private Encoder m_LeftDrive;

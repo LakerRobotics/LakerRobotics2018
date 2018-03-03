@@ -1070,7 +1070,7 @@ public class Robot extends IterativeRobot
 	//Record for record playback
     	//the statement in this "if" checks if a button you designate as your record button 
     	//has been pressed, and stores the fact that it has been pressed in a variable
-    	System.out.println("Robot.record4LaterPlayback() m_RobotInterface.GetRecord()="+m_RobotInterface.GetDriverButton(11)+"  isRecording="+isRecording);
+    	//System.out.println("Robot.record4LaterPlayback() m_RobotInterface.GetRecord()="+m_RobotInterface.GetDriverButton(11)+"  isRecording="+isRecording);
     	if (m_RobotInterface.GetDriverButton(11)) 
 		{
     		isRecording = true;
@@ -1176,9 +1176,9 @@ public void disabledInit(){
     	{
     		m_Intake.RotateLeft();
     	} 
-    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
+    	/*else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
     		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
-    	} 
+    	} */
     	else 
     	{
     		m_Intake.StopIntake();
@@ -1215,9 +1215,9 @@ public void disabledInit(){
     	
     }
     public void rollerControl() {
-    	if (m_RobotInterface.GetOperatorButton(11)) {
+    	if (m_RobotInterface.GetOperatorButton(9)) {
     		m_Roller.set(.80);
-    	} else if (m_RobotInterface.GetOperatorButton(12)) {
+    	} else if (m_RobotInterface.GetOperatorButton(10)) {
     		m_Roller.set(-.80);
     	} else {
     		m_Roller.set(0.0);
