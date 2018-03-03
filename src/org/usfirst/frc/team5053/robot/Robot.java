@@ -210,7 +210,7 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	autonRoutine = "test"; //SmartDashboard.getString("Auton Selection", "center scale");		// Start position of the robot from our side of the field
+    	autonRoutine = SmartDashboard.getString("Auton Selection", "test");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Step", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -317,7 +317,7 @@ public class Robot extends IterativeRobot
     		//controlledAngleTest();
     		//turnTest();
     		//switchCenter();
-    		worstCaseScenarioScaleLeftRightTest();
+    		//worstCaseScenarioScaleLeftRightTest();
     		break;
     	case "playback":
     		m_BTMacroPlay.play(m_RobotControllers);
