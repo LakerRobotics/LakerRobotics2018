@@ -22,6 +22,18 @@ public class RobotValuesLisa extends RobotValues
 	{
 		return 2;
 	}
+	public int getRightIntakePWM()
+	{
+		return 1;
+	}
+	public int getLeftIntakePWM()
+	{
+		return 0;
+	}
+	public int getRollerPWM()
+	{
+		return 6;
+	}
 
 	
 	public boolean getLeftDriveInverted()
@@ -43,9 +55,17 @@ public class RobotValuesLisa extends RobotValues
 		return false;
 	}
 	
-	
 	public double getEncoderDistancePerPulse()
 	{
 		return 6*Math.PI/1024;
+	}
+	
+	public int rotationControllerInverted()
+	{
+		return 1;
+	}
+	public int arcadeDriveRotationInverted()
+	{
+		return -1;
 	}
 }

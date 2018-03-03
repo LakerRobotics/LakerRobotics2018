@@ -27,9 +27,9 @@ public class RobotControllerMap
 	private final int rightDrive1PWM 	= RobotConstants.getRightDrivePWM1();
 	private final int rightDrive2PWM 	= RobotConstants.getRightDrivePWM2();
 	private final int elevatorCAN 		= RobotConstants.getElevatorPWM();
-	private final int intakeLeftPWM 	= 0;
-	private final int intakeRightPWM 	= 1;
-	private final int rollerPWM = 6;
+	private final int intakeLeftPWM 	= RobotConstants.getLeftIntakePWM();
+	private final int intakeRightPWM 	= RobotConstants.getRightIntakePWM();
+	private final int rollerPWM = RobotConstants.getRollerPWM();
 	private final int catapultSolenoidSlot = 0;
 	
 	private final int catapultLeftExpandSolenoidSlot 	= 0;

@@ -14,6 +14,9 @@ public abstract class RobotValues {
 	public int getRightDrivePWM1(){return 0;}
 	public int getRightDrivePWM2(){return 0;}
 	public int getElevatorPWM()   {return 0;}
+	public int getRightIntakePWM(){return 0;}
+	public int getLeftIntakePWM() {return 0;}
+	public int getRollerPWM()	  {return 0;}
 
 	public double getEncoderDistancePerPulse(){return 0;}//converts click to distance in inches
 	public boolean getLeftEncoderInverted()	{return false;}
@@ -26,4 +29,6 @@ public abstract class RobotValues {
 	public double getPidDist_AbsoluteTolerance(){return 0.0;}
 		
 	public double getMaxRotationSpeed(){return 0.0;}
+	public int rotationControllerInverted(){return 0;}
+	public int arcadeDriveRotationInverted(){return 0;}
 }
