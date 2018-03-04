@@ -6,7 +6,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.usfirst.frc.team5053.robot.RobotControllerMap;
+
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+
 import org.usfirst.frc.team5053.robot.Robot;
+import org.usfirst.frc.team5053.robot.RobotConstants;
+
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+
 
 /*
 *This macro records all the movements you make in teleop and saves them to the file you specify.
@@ -57,14 +64,18 @@ public class BTMacroRecord {
 		}
 		else // writer is available so 
 		{
-			writeLilGeekMotorValues(theRobotControllerMap);
+			if(RobotConstants.getRobotName()== "lisa") {
+				writeLisaMotorValuesToFile(theRobotControllerMap);
+			}else {
+				writeLilGeekMotorValuesToFile(theRobotControllerMap);
+			}
 		}
 	}
 
 
-	private void writeLilGeekMotorValues(RobotControllerMap theRobotControllerMap) throws IOException {
+	private void writeLilGeekMotorValuesToFile(RobotControllerMap theRobotControllerMap) throws IOException {
 		if(debug) {
-			System.out.print("in BTMacroRecord.record() "+(System.currentTimeMillis()-startTime)
+			System.out.print("in BTMacroRecord.writeLilGeekMotorValuesToFile() "+(System.currentTimeMillis()-startTime)
 				//drive motors		
 				+"," + theRobotControllerMap.getLeftDriveGroup().get()
 				+"," + theRobotControllerMap.getRightDriveGroup().get()
@@ -76,39 +87,102 @@ public class BTMacroRecord {
 				+ "\n"
 			);
 		}
-//start each "frame" with the elapsed time since we started recording
-writer.append("" + (System.currentTimeMillis()-startTime));
+		//start each "frame" with the elapsed time since we started recording
+		writer.append("" + (System.currentTimeMillis()-startTime));
 
-//in this chunk, use writer.append to add each type of data you want to record to the frame
-//the 2015 robot used the following motors during auto
+		//in this chunk, use writer.append to add each type of data you want to record to the frame
 
-//drive motors
-writer.append("," + theRobotControllerMap.getLeftDriveGroup().get());
-writer.append("," + theRobotControllerMap.getRightDriveGroup().get());
+		//drive motors
+		writer.append("," + theRobotControllerMap.getLeftDriveGroup().get());
+		writer.append("," + theRobotControllerMap.getRightDriveGroup().get());
 
-//intake motors
-writer.append("," + theRobotControllerMap.getLeftIntake().get());
-writer.append("," + theRobotControllerMap.getRightIntake().get());
+		//intake motors
+		writer.append("," + theRobotControllerMap.getLeftIntake().get());
+		writer.append("," + theRobotControllerMap.getRightIntake().get());
 
-//Elevator motor
-writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
-/*
- * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
- * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
- */ 
+		//Elevator motor
+		writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
+		/*
+		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
+		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
+		 */ 
 
-//this records a true/false value from a piston
-//		writer.append("," + theRobotControllerMap.getCatapult().get() + "\n");
-writer.append( "\n");
+		//this records a true/false value from a piston
+		//		writer.append("," + theRobotControllerMap.getCatapult().get() + "\n");
+		writer.append( "\n");
 		
-//writer.append("," + storage.robot.getToteClamp().isExtended() + "\n");
+		//writer.append("," + storage.robot.getToteClamp().isExtended() + "\n");
 
-/*
- * CAREFUL. KEEP THE LAST THING YOU RECORD BETWEEN THESE TWO COMMENTS AS A
- * REMINDER TO APPEND THE DELIMITER
- */
+		/*
+		 * CAREFUL. KEEP THE LAST THING YOU RECORD BETWEEN THESE TWO COMMENTS AS A
+		 * REMINDER TO APPEND THE DELIMITER
+		 */
 	}
 	
+	private void writeLisaMotorValuesToFile(RobotControllerMap theRobotControllerMap) throws IOException {
+		if(debug) {
+			System.out.print("in BTMacroRecord.writeLisaMotorValuesToFile() "+(System.currentTimeMillis()-startTime)
+				//drive motors		
+				+"," + theRobotControllerMap.getLeftDriveGroup().get()
+				+"," + theRobotControllerMap.getRightDriveGroup().get()
+				//intake motors
+				+"," + theRobotControllerMap.getLeftIntake().get()
+				+"," + theRobotControllerMap.getRightIntake().get()
+				+"," + theRobotControllerMap.getRoller().get()
+				//Elevator motor
+				+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
+				//Intake Squeeze
+				+"," + theRobotControllerMap.getIntakeSolenoid().get()
+				//Catapult
+				+"," + theRobotControllerMap.getCatapultLeft().get()
+				+ "\n"
+			);
+		}
+		//start each "frame" with the elapsed time since we started recording
+		writer.append("" + (System.currentTimeMillis()-startTime));
+
+		//in this chunk, use writer.append to add each type of data you want to record to the frame
+
+		//drive motors
+		writer.append("," + theRobotControllerMap.getLeftDriveGroup( ).get());
+		writer.append("," + theRobotControllerMap.getRightDriveGroup().get());
+
+		//intake motors
+		writer.append("," + theRobotControllerMap.getLeftIntake( ).get());
+		writer.append("," + theRobotControllerMap.getRightIntake().get());
+		writer.append("," + theRobotControllerMap.getRoller(     ).get());
+
+		//Elevator motor
+		writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
+		
+		// intake squeeze
+		boolean squeeze;
+		if(theRobotControllerMap.getIntakeSolenoid().get() == Value.kForward) {
+			squeeze = true;
+		}
+		else {
+			squeeze = false;
+		}
+		writer.append("," + squeeze);
+		
+		//catapult
+		boolean catapult;
+		if(theRobotControllerMap.getCatapultLeft().get() == Value.kForward) {
+			catapult = true;
+		}
+		else {
+			catapult = false;
+		}
+		writer.append("," + catapult);
+	
+		/*
+		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
+		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
+		 */ 
+
+		writer.append( "\n");
+		
+	}
 	
 	//this method closes the writer and makes sure that all the data you recorded makes it into the file
 	public void end() throws IOException

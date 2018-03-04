@@ -9,6 +9,10 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 
 import org.usfirst.frc.team5053.robot.RobotControllerMap;
 import org.usfirst.frc.team5053.robot.Robot;
+import org.usfirst.frc.team5053.robot.RobotConstants;
+
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+
 
 
 /*Code outline to implement playing back a macro recorded in BTMacroRecord
@@ -88,7 +92,11 @@ public class BTMacroPlay {
 			//if we are on time, then set motor values
 			if (t_delta <= 0)
 			{
-				writeLilGeekValueToMotors(theRobotControllerMap);				
+				if(RobotConstants.getRobotName()== "lisa") {
+					writeLisaValueToMotors(theRobotControllerMap);				
+				}else {
+					writeLilGeekValueToMotors(theRobotControllerMap);				
+				}
 				//go to next double
 				onTime = true;
 			}
@@ -117,7 +125,6 @@ public class BTMacroPlay {
 	}
 
 	private void writeLilGeekValueToMotors(RobotControllerMap theRobotControllerMap) {
-		//for 2015 robot. these are all the motors available to manipulate during autonomous.
 		//it is extremely important to set the motors in the SAME ORDER as was recorded in BTMacroRecord
 		//otherwise, motor values will be sent to the wrong motors and the robot will be unpredicatable
 		
@@ -129,28 +136,75 @@ public class BTMacroPlay {
 		theRobotControllerMap.getLeftIntake().set(scanner.nextDouble());
 		theRobotControllerMap.getRightIntake().set(scanner.nextDouble());
 		
-		//Elevator motor
-		theRobotControllerMap.getElevator().set(ControlMode.PercentOutput,scanner.nextDouble());
-		/*
-		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
-		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
-		 */
 		if(debug) {
-			System.out.print("in BTMacroRecord.play() "+(System.currentTimeMillis()-startTime)
+			System.out.print("in BTMacroRecord.writeLilGeekValueToMotors() "+(System.currentTimeMillis()-startTime)
 				//drive motors		
 				+"," + theRobotControllerMap.getLeftDriveGroup().get()
 				+"," + theRobotControllerMap.getRightDriveGroup().get()
 				//intake motors
 				+"," + theRobotControllerMap.getLeftIntake().get()
 				+"," + theRobotControllerMap.getRightIntake().get()
+				+ "\n"
+			);
+		}		
+	}
+	
+	private void writeLisaValueToMotors(RobotControllerMap theRobotControllerMap) {
+		//it is extremely important to set the motors in the SAME ORDER as was recorded in BTMacroRecord
+		//otherwise, motor values will be sent to the wrong motors and the robot will be unpredicatable
+		
+		//drive motors
+		theRobotControllerMap.getLeftDriveGroup( ).set(scanner.nextDouble());
+		theRobotControllerMap.getRightDriveGroup().set(scanner.nextDouble());
+		
+		//intake motors
+		theRobotControllerMap.getLeftIntake( ).set(scanner.nextDouble());
+		theRobotControllerMap.getRightIntake().set(scanner.nextDouble());
+		theRobotControllerMap.getRoller(     ).set(scanner.nextDouble());
+		
+		//Elevator motor
+		theRobotControllerMap.getElevator().set(ControlMode.PercentOutput,scanner.nextDouble());
+		
+		//intake squeeze
+		boolean squeeze = scanner.nextBoolean();
+		if(squeeze==true) {
+			theRobotControllerMap.getIntakeSolenoid().set(Value.kForward);
+		}
+		else {
+			theRobotControllerMap.getIntakeSolenoid().set(Value.kReverse);
+		}
+		
+		//Catapult
+		boolean catapult = scanner.nextBoolean();
+		if(catapult==true) {
+			theRobotControllerMap.getCatapultLeft().set(Value.kForward);
+			theRobotControllerMap.getCatapultRight().set(Value.kForward);
+		}
+		else {
+			theRobotControllerMap.getCatapultLeft().set(Value.kReverse);
+			theRobotControllerMap.getCatapultRight().set(Value.kReverse);
+		}
+
+
+		if(debug) {
+			System.out.print("in BTMacroRecord.writeLisaValueToMotors() "+(System.currentTimeMillis()-startTime)
+				//drive motors		
+				+"," + theRobotControllerMap.getLeftDriveGroup().get()
+				+"," + theRobotControllerMap.getRightDriveGroup().get()
+				//intake motors
+				+"," + theRobotControllerMap.getLeftIntake().get()
+				+"," + theRobotControllerMap.getRightIntake().get()
+				+"," + theRobotControllerMap.getRoller().get()
 				//Elevator motor
 				+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
+				//Intake Squeeze
+				+"," + theRobotControllerMap.getIntakeSolenoid().get()
+				//Catapult
+				+"," + theRobotControllerMap.getCatapultLeft().get()
 				+ "\n"
 			);
 		}
 		
-		//this records a true/false value from a piston
-//				theRobotControllerMap.getCatapult().set(scanner.nextBoolean() );
 
 /*				storage.robot.getFrontLeftMotor().setX(scanner.nextDouble());
 		storage.robot.getFrontRightMotor().setX(scanner.nextDouble());
