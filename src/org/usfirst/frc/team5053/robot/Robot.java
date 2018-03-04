@@ -1179,6 +1179,17 @@ public void disabledInit(){
     	/*else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
     		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
     	} */
+    	// if joystick left-right more then 5% or twist more then 5% then variable joystick control of intake (note any button above the buttons take precedent and we never get here)
+    	else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05
+    			|| Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(3)) > .05){
+    		// if twist is less then 5% then just straight intake
+    		if( Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(3)) < .05) {
+    			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), 0);
+    		// else twist power is more then 5% so apply variable twist power
+    		}else {
+    			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), m_RobotInterface.GetOperatorJoystick().getRawAxis(3));
+    		}
+    	} 
     	else 
     	{
     		m_Intake.StopIntake();
