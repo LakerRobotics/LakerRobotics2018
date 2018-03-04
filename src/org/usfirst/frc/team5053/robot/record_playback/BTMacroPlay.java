@@ -88,56 +88,7 @@ public class BTMacroPlay {
 			//if we are on time, then set motor values
 			if (t_delta <= 0)
 			{
-				//for 2015 robot. these are all the motors available to manipulate during autonomous.
-				//it is extremely important to set the motors in the SAME ORDER as was recorded in BTMacroRecord
-				//otherwise, motor values will be sent to the wrong motors and the robot will be unpredicatable
-				
-				//drive motors
-				theRobotControllerMap.getLeftDriveGroup().set(scanner.nextDouble());
-				theRobotControllerMap.getRightDriveGroup().set(scanner.nextDouble());
-				
-				//intake motors
-				theRobotControllerMap.getLeftIntake().set(scanner.nextDouble());
-				theRobotControllerMap.getRightIntake().set(scanner.nextDouble());
-				
-				//Elevator motor
-				theRobotControllerMap.getElevator().set(ControlMode.PercentOutput,scanner.nextDouble());
-				/*
-				 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
-				 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
-				 */
-				if(debug) {
-					System.out.print("in BTMacroRecord.play() "+(System.currentTimeMillis()-startTime)
-						//drive motors		
-						+"," + theRobotControllerMap.getLeftDriveGroup().get()
-						+"," + theRobotControllerMap.getRightDriveGroup().get()
-						//intake motors
-						+"," + theRobotControllerMap.getLeftIntake().get()
-						+"," + theRobotControllerMap.getRightIntake().get()
-						//Elevator motor
-						+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
-						+ "\n"
-					);
-				}
-				
-				//this records a true/false value from a piston
-//				theRobotControllerMap.getCatapult().set(scanner.nextBoolean() );
-
-/*				storage.robot.getFrontLeftMotor().setX(scanner.nextDouble());
-				storage.robot.getFrontRightMotor().setX(scanner.nextDouble());
-				storage.robot.getBackRightMotor().setX(scanner.nextDouble());
-				storage.robot.getBackLeftMotor().setX(scanner.nextDouble());
-				
-				storage.robot.getBarrelMotorLeft().setX(scanner.nextDouble());
-				storage.robot.getBarrelMotorRight().setX(scanner.nextDouble());
-				
-				storage.robot.getLeftForkLeft().setX(scanner.nextDouble());
-				storage.robot.getLeftForkRight().setX(scanner.nextDouble());
-				storage.robot.getRightForkLeft().setX(scanner.nextDouble());
-				storage.robot.getRightForkRight().setX(scanner.nextDouble());
-				
-				storage.robot.getToteClamp().set(storage.robot.getToteClamp().isExtended());
-*/				
+				writeLilGeekValueToMotors(theRobotControllerMap);				
 				//go to next double
 				onTime = true;
 			}
@@ -163,6 +114,59 @@ public class BTMacroPlay {
 			}
 		}
 		
+	}
+
+	private void writeLilGeekValueToMotors(RobotControllerMap theRobotControllerMap) {
+		//for 2015 robot. these are all the motors available to manipulate during autonomous.
+		//it is extremely important to set the motors in the SAME ORDER as was recorded in BTMacroRecord
+		//otherwise, motor values will be sent to the wrong motors and the robot will be unpredicatable
+		
+		//drive motors
+		theRobotControllerMap.getLeftDriveGroup().set(scanner.nextDouble());
+		theRobotControllerMap.getRightDriveGroup().set(scanner.nextDouble());
+		
+		//intake motors
+		theRobotControllerMap.getLeftIntake().set(scanner.nextDouble());
+		theRobotControllerMap.getRightIntake().set(scanner.nextDouble());
+		
+		//Elevator motor
+		theRobotControllerMap.getElevator().set(ControlMode.PercentOutput,scanner.nextDouble());
+		/*
+		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
+		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
+		 */
+		if(debug) {
+			System.out.print("in BTMacroRecord.play() "+(System.currentTimeMillis()-startTime)
+				//drive motors		
+				+"," + theRobotControllerMap.getLeftDriveGroup().get()
+				+"," + theRobotControllerMap.getRightDriveGroup().get()
+				//intake motors
+				+"," + theRobotControllerMap.getLeftIntake().get()
+				+"," + theRobotControllerMap.getRightIntake().get()
+				//Elevator motor
+				+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
+				+ "\n"
+			);
+		}
+		
+		//this records a true/false value from a piston
+//				theRobotControllerMap.getCatapult().set(scanner.nextBoolean() );
+
+/*				storage.robot.getFrontLeftMotor().setX(scanner.nextDouble());
+		storage.robot.getFrontRightMotor().setX(scanner.nextDouble());
+		storage.robot.getBackRightMotor().setX(scanner.nextDouble());
+		storage.robot.getBackLeftMotor().setX(scanner.nextDouble());
+		
+		storage.robot.getBarrelMotorLeft().setX(scanner.nextDouble());
+		storage.robot.getBarrelMotorRight().setX(scanner.nextDouble());
+		
+		storage.robot.getLeftForkLeft().setX(scanner.nextDouble());
+		storage.robot.getLeftForkRight().setX(scanner.nextDouble());
+		storage.robot.getRightForkLeft().setX(scanner.nextDouble());
+		storage.robot.getRightForkRight().setX(scanner.nextDouble());
+		
+		storage.robot.getToteClamp().set(storage.robot.getToteClamp().isExtended());
+*/
 	}
 	
 	public boolean isDone() {return done;};

@@ -57,51 +57,56 @@ public class BTMacroRecord {
 		}
 		else // writer is available so 
 		{
-			if(debug) {
-				System.out.print("in BTMacroRecord.record() "+(System.currentTimeMillis()-startTime)
-					//drive motors		
-					+"," + theRobotControllerMap.getLeftDriveGroup().get()
-					+"," + theRobotControllerMap.getRightDriveGroup().get()
-					//intake motors
-					+"," + theRobotControllerMap.getLeftIntake().get()
-					+"," + theRobotControllerMap.getRightIntake().get()
-					//Elevator motor
-					+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
-					+ "\n"
-				);
-			}
-		//start each "frame" with the elapsed time since we started recording
-		writer.append("" + (System.currentTimeMillis()-startTime));
-		
-		//in this chunk, use writer.append to add each type of data you want to record to the frame
-		//the 2015 robot used the following motors during auto
-		
-		//drive motors
-		writer.append("," + theRobotControllerMap.getLeftDriveGroup().get());
-		writer.append("," + theRobotControllerMap.getRightDriveGroup().get());
-		
-		//intake motors
-		writer.append("," + theRobotControllerMap.getLeftIntake().get());
-		writer.append("," + theRobotControllerMap.getRightIntake().get());
-		
-		//Elevator motor
-		writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
-		/*
-		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
-		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
-		 */ 
-		
-		//this records a true/false value from a piston
-//		writer.append("," + theRobotControllerMap.getCatapult().get() + "\n");
-		writer.append( "\n");
-			
-		//writer.append("," + storage.robot.getToteClamp().isExtended() + "\n");
-		
-		/*
-		 * CAREFUL. KEEP THE LAST THING YOU RECORD BETWEEN THESE TWO COMMENTS AS A
-		 * REMINDER TO APPEND THE DELIMITER
-		 */
+			writeLilGeekMotorValues(theRobotControllerMap);
 		}
+	}
+
+
+	private void writeLilGeekMotorValues(RobotControllerMap theRobotControllerMap) throws IOException {
+		if(debug) {
+			System.out.print("in BTMacroRecord.record() "+(System.currentTimeMillis()-startTime)
+				//drive motors		
+				+"," + theRobotControllerMap.getLeftDriveGroup().get()
+				+"," + theRobotControllerMap.getRightDriveGroup().get()
+				//intake motors
+				+"," + theRobotControllerMap.getLeftIntake().get()
+				+"," + theRobotControllerMap.getRightIntake().get()
+				//Elevator motor
+				+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
+				+ "\n"
+			);
+		}
+//start each "frame" with the elapsed time since we started recording
+writer.append("" + (System.currentTimeMillis()-startTime));
+
+//in this chunk, use writer.append to add each type of data you want to record to the frame
+//the 2015 robot used the following motors during auto
+
+//drive motors
+writer.append("," + theRobotControllerMap.getLeftDriveGroup().get());
+writer.append("," + theRobotControllerMap.getRightDriveGroup().get());
+
+//intake motors
+writer.append("," + theRobotControllerMap.getLeftIntake().get());
+writer.append("," + theRobotControllerMap.getRightIntake().get());
+
+//Elevator motor
+writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
+/*
+ * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
+ * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
+ */ 
+
+//this records a true/false value from a piston
+//		writer.append("," + theRobotControllerMap.getCatapult().get() + "\n");
+writer.append( "\n");
+		
+//writer.append("," + storage.robot.getToteClamp().isExtended() + "\n");
+
+/*
+ * CAREFUL. KEEP THE LAST THING YOU RECORD BETWEEN THESE TWO COMMENTS AS A
+ * REMINDER TO APPEND THE DELIMITER
+ */
 	}
 	
 	
