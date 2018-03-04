@@ -82,6 +82,13 @@ public class Robot extends IterativeRobot
 	//Vision declaration
 	
 	//Subsystem constants
+	// setup for variable control intake the speed of the roller relative to the wheels
+	private double speedOfIntake = /*gearRatio*/(24/1)*/*Diameter*/4.00;
+	private double speedOfRollers = /*gearRatio*/(5/1)*/*Diameter*/2.5;
+	private double rollerMotorDeadZone = 0.15;
+	private double speed_relative_to_intake_wheels =  3*(speedOfRollers/speedOfIntake); // RGT 20180303 looks like only 0.13 is not enough to gaurntee the wheels will turn, but add dead zone and 3 times that is
+	// private double speed_relative_to_intake_wheels = 0.25; // if the complexity above is not a good guess just start playing with this number
+
 
 	//Vision constants
 	
@@ -1230,6 +1237,9 @@ public void disabledInit(){
     		m_Roller.set(.80);
     	} else if (m_RobotInterface.GetOperatorButton(10)) {
     		m_Roller.set(-.80);
+        // This goes along with the Variable intake
+        } else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05) {
+        	m_Roller.set(rollerMotorDeadZone+speed_relative_to_intake_wheels*m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
     	} else {
     		m_Roller.set(0.0);
     	}
