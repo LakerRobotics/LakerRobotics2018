@@ -82,14 +82,13 @@ public class Robot extends IterativeRobot
 	//Vision declaration
 	
 	//Subsystem constants
+	
 	// setup for variable control intake the speed of the roller relative to the wheels
 	private double speedOfIntake = /*gearRatio*/(24/1)*/*Diameter*/4.00;
 	private double speedOfRollers = /*gearRatio*/(5/1)*/*Diameter*/2.5;
 	private double rollerMotorDeadZone = 0.15;
 	private double speed_relative_to_intake_wheels =  3*(speedOfRollers/speedOfIntake); // RGT 20180303 looks like only 0.13 is not enough to gaurntee the wheels will turn, but add dead zone and 3 times that is
 	// private double speed_relative_to_intake_wheels = 0.25; // if the complexity above is not a good guess just start playing with this number
-
-
 	//Vision constants
 	
 	//Autonomous variables
@@ -133,6 +132,7 @@ public class Robot extends IterativeRobot
 	private final double kTransfer = -10000.0; //-13290.0
 	private final double kLow = 0.0;
 	private final double kHigh = -19569.0;
+	private int transferIntakeCase = 0;
 	
 	private double m_driveSpeed = 1.0;
 	
@@ -1056,10 +1056,10 @@ public class Robot extends IterativeRobot
     	// Subsystem methods
     	arcadeDrive();
     	if (m_robotName == "lisa") {
-    		elevatorControl();
         	intakeControl();
         	catapultControl();
         	rollerControl();
+    		elevatorControl();// elevator has to come last because transfer button will override other buttons, so specifically the intake and roller
     	}
     	
     	
@@ -1159,11 +1159,54 @@ public void disabledInit(){
     		// Elevator power is halved to prevent damage to the elevator when manually controlled
     		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.5);
     	}
-    	if (m_RobotInterface.GetOperatorButton(8)) {
-    		m_Elevator.setPosition(kTransfer);
-    		if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 1500 ) {
-    			m_Intake.IntakeCube();
+    	if (m_RobotInterface.GetOperatorButton(8)) 
+    	{
+    		int transferIntakeVersion  = 2;
+    		if (transferIntakeVersion == 1){
+    			m_Elevator.setPosition(kTransfer);
+    			if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 1500 ) {
+    				m_Intake.IntakeCube();
+    			}
+    		}else{
+    			switch (transferIntakeCase)
+    			{
+    			case  0:// ensure Cube  is squeezed
+    				m_Intake.retractIntake();
+    				transferIntakeCase++;
+    				break;
+    			case  1: // Move Cube up
+    	    		m_Elevator.disablePID();
+    				m_Elevator.manualControl(0.5);
+    				transferIntakeCase++;
+        			break;
+        		case  2: // Move Cube back into catapult
+    				if(m_Elevator.getCurrentPosition()>kTransfer-250) 
+    				{
+    					m_Elevator.setPosition(kTransfer);// so we start PID control 0.25" below the target
+    					//m_Intake.IntakeCube();//RGT 20180304 this is currently way to fast in my opinion at 100%
+    					m_Intake.AdjustableSpeed(0.5);
+    					m_Roller.set(0.35);
+    					transferIntakeCase++;
+    				}
+        			break;
+        		case 3:
+    				// Continue to overide any of the other buttons they might be pressing (this one take priority) if they don't like that they will release the button 
+					m_Elevator.setPosition(kTransfer);// think normally we would do this at next case but I want this to be fast and not waste a cycle overshoting the transfer height, so we start 0.25" below the target
+					m_Intake.AdjustableSpeed(0.5);
+					m_Roller.set(0.35);
+    				break;
+    			}
     		}
+    	}else {
+    		// See if they just released the button
+    		if(transferIntakeCase>0) 
+    		{
+    			m_Elevator.disablePID();
+				m_Intake.ReleaseCube();
+				m_Intake.AdjustableSpeed(0);
+				m_Roller.set(0);
+				transferIntakeCase=0;
+    		};
     	}
     }
     public void intakeControl() {
