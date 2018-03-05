@@ -1254,7 +1254,7 @@ public void disabledInit(){
     			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), m_RobotInterface.GetOperatorJoystick().getRawAxis(3));
     		}
     	} */
-    	else 
+    	else if (!m_RobotInterface.GetOperatorButton(8))
     	{
     		m_Intake.StopIntake();
     	}
