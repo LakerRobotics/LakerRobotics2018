@@ -2,6 +2,8 @@ package org.usfirst.frc.team5053.robot;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
@@ -1070,6 +1072,9 @@ public class Robot extends IterativeRobot
     	GetDashboardData();
     	WriteDashboardData();
     	
+    	//Testing will only do something if on LilGeek (ie not on Lisa)
+    	testTimingCatapultTimeLimited();
+    	
     }
     
     public void record4LaterPlayback()
@@ -1380,5 +1385,63 @@ public void disabledInit(){
 		return intToReturn;
 	}
 	
+	// Test the CatapultTimeLimited, timing accuracy
+	Instant lastThrow = Instant.now();
+	int cycleBufferMilli = 30;//Time to wait between cycles
+	int cycleCurrentLength = 100; 
+	int cycleStartIncrement = 5;
+	int cyclesToRun = 50;
+	int cycleOnNow = 0;
+	boolean timeTestingError = false;
+	
+	public void testTimingCatapultTimeLimited() {
+		if (m_robotName != "lisa") {
+			if(timeTestingError==false) {
+				try {
+					//if(m_ThePult==null) {
+					//	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
+					//}
+					Instant now = Instant.now();
+					if (       now.getLong(ChronoField.MILLI_OF_SECOND)
+							-lastThrow.getLong(ChronoField.MILLI_OF_SECOND)
+							> cycleCurrentLength+cycleBufferMilli ) {
+						double secondsTillReverse = (double)cycleCurrentLength/(double)1000;
+						
+						long milliSecondsTillReverse = (long) (secondsTillReverse*1000);
+						int nanoSecondTillReverse = (int) (secondsTillReverse*1000*1000000 - milliSecondsTillReverse*1000000);
+						
+						// called and will print in the Log, and then pull from that log and can see how consistent it is in hitting the requested firing time.
+					    Thread t = new Thread(() -> {
+					    	try {
+					     		Instant start = Instant.now();
+					     		Thread.sleep(milliSecondsTillReverse, nanoSecondTillReverse);
+					     		Instant end = Instant.now();
+					     		double howLongActualFired = (end.getNano()-start.getNano())/1000000000;
+					     		System.out.println("Robot.testTimingCataputlTimeLimited thread: Wanted to wait for "+secondsTillReverse+" seconds; actually wait was "+howLongActualFired+ " seconds.  Error was " +(howLongActualFired -secondsTillReverse)+ " seconds.");
+					     	} catch (InterruptedException e) {
+					     		e.printStackTrace();
+					     	}
+					    });
+					        
+					    // start the thread that will run the above code totally independently of the normal robot thread
+					    t.start();
+					        
+						//m_ThePult.LauchTimeLimited((double)cycleCurrentLength/(double)1000);
+						cycleOnNow++;
+						if(cycleOnNow>cyclesToRun) {
+							cycleCurrentLength=cycleCurrentLength+cycleStartIncrement;
+							cycleOnNow=0;
+						}
+					}
+				}
+				catch(Exception e) {
+					System.out.println("testTimingCatapultTimeLimited testing stopping becuase exception "+e);
+					timeTestingError=true;// stop test
+				}
+			}
+		}
+		
+	
+	}
     
 }
