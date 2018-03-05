@@ -290,9 +290,9 @@ public class Robot extends IterativeRobot
          */
     		if (m_robotName == "lisa") {
     			if (!hasElevatorEncoderZeroed) {
-    	    		m_Elevator.manualControl(-.30);
+    	    		m_Elevator.manualControl(0.30);
     	    	}
-    	    	if (m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
+    	    	if (!m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
     	    		m_Elevator.resetEncoder();
     	    		hasElevatorEncoderZeroed = true;
     	    	}
@@ -306,15 +306,15 @@ public class Robot extends IterativeRobot
     		switchCenter();
 			break;
     	case "left scale": // LEFT AUTON SCALE FIRST
-    		//scaleLeftRight();
-    		worstCaseScenarioScaleLeftRightTest();
+    		scaleLeftRight();
+    		//worstCaseScenarioScaleLeftRightTest();
     		break;
     	case "center scale": // CENTER AUTON SCALE
     		scaleCenter();
     		break;
     	case "right scale": // RIGHT AUTON SCALE FIRST
-    		//scaleLeftRight();
-    		worstCaseScenarioScaleLeftRightTest();
+    		scaleLeftRight();
+    		//worstCaseScenarioScaleLeftRightTest();
     		break;
     	case "diagnostic": // DEBUG AUTO
 			diagnosticTest();
@@ -555,11 +555,11 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
     			if(switchChar == 'L')
     			{
-            		m_DriveTrain.DriveControlledAngle(-12*4.5, 8, 5, -30);
+            		m_DriveTrain.DriveControlledAngle(-12*3.5, 8, 5, -30);
     			}
     			else
     			{
-    				m_DriveTrain.DriveControlledAngle(-12*4, 8, 5, 30);
+    				m_DriveTrain.DriveControlledAngle(-12*3.5, 8, 5, 30);
     			}
     			
     			if (m_robotName == "lisa") {
@@ -590,13 +590,18 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			
-    			if (m_robotName == "lisa") {
+    			///TODO
+    			if (m_robotName == "lisa" && (Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kHigh)) <= 2000 ) 
+    			{
     				m_ThePult.Launch();
+    				autonomousCase++;
+    			}
+    			else
+    			{
+        			autonomousCase = 5;
     			}
     			
     			autonomousWait = 0;
-    			autonomousCase++;
     		}
     		break;
     	case 4:
@@ -625,14 +630,14 @@ public class Robot extends IterativeRobot
 	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
-    			m_DriveTrain.DriveDistance(-(19*12/*Decision Point*/ + 70.5/*Decision point to scale*/), 4, 1);
+    			m_DriveTrain.DriveDistance(-(11*12/*Decision Point*/ + 70.5/*Decision point to scale*/), 5, 1);
     			if (m_robotName == "lisa") {
     				m_Elevator.setPosition(kHigh);
     			}
     			autonomousCase = 8; // ******Jump to the end of the routine
     		break;
     	case 2: // Drive to the decision point
-    		m_DriveTrain.DriveDistance(-19*12, 4, 1);
+    		m_DriveTrain.DriveDistance(-11*12, 8, 1);
     		if (m_robotName == "lisa") {
     			m_Elevator.setPosition(kHigh);
     		}
@@ -658,11 +663,11 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
     		if(scaleChar == 'R')
     		{
-    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, 90);
+    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, 90);
     		}
     		else
     		{
-    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, -90);
+    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, -90);
     		}
 			autonomousCase++;
     		break;
@@ -1060,6 +1065,7 @@ public class Robot extends IterativeRobot
     	if (m_robotName == "lisa") {
         	intakeControl();
         	catapultControl();
+        	//switchCatapultShot();
         	rollerControl();
     		elevatorControl();// elevator has to come last because transfer button will override other buttons, so specifically the intake and roller
     	}
@@ -1158,13 +1164,20 @@ public void disabledInit(){
     	//{
     	//	m_Elevator.setPosition(kHigh);
     	//} 
-    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
+    	else if (m_RobotInterface.GetOperatorButton(8)) 
+    	{
+    		m_Elevator.setPosition(kTransfer);
+    		if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 2000 ) 
+    		{
+    			m_Intake.IntakeCube();
+    		}
+    	}  else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
     	{
     		m_Elevator.disablePID();
     		// Elevator power is halved to prevent damage to the elevator when manually controlled
-    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.5);
-    	}
-    	if (m_RobotInterface.GetOperatorButton(8)) 
+    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.75);
+    	}	
+    	/*if (m_RobotInterface.GetOperatorButton(8)) 
     	{
     		int transferIntakeVersion  = 2;
     		if (transferIntakeVersion == 1){
@@ -1212,7 +1225,8 @@ public void disabledInit(){
 				m_Roller.set(0);
 				transferIntakeCase=0;
     		};
-    	}
+    	}*/
+    	
     }
     public void intakeControl() {
     	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) 
@@ -1233,7 +1247,7 @@ public void disabledInit(){
     	} 
     	/*else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
     		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
-    	} */
+    	} 
     	// if joystick left-right more then 5% or twist more then 5% then variable joystick control of intake (note any button above the buttons take precedent and we never get here)
     	else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05
     			|| Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(3)) > .05){
@@ -1244,8 +1258,8 @@ public void disabledInit(){
     		}else {
     			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), m_RobotInterface.GetOperatorJoystick().getRawAxis(3));
     		}
-    	} 
-    	else 
+    	} */
+    	else if (!m_RobotInterface.GetOperatorButton(8))
     	{
     		m_Intake.StopIntake();
     	}
@@ -1286,9 +1300,9 @@ public void disabledInit(){
     	} else if (m_RobotInterface.GetOperatorButton(10)) {
     		m_Roller.set(-.80);
         // This goes along with the Variable intake
-        } else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05) {
+        }/* else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05) {
         	m_Roller.set(rollerMotorDeadZone+speed_relative_to_intake_wheels*m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
-    	} else {
+    	} */else {
     		m_Roller.set(0.0);
     	}
     }
