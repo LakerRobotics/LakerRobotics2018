@@ -1242,7 +1242,7 @@ public void disabledInit(){
     	} 
     	/*else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
     		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
-    	} */
+    	} 
     	// if joystick left-right more then 5% or twist more then 5% then variable joystick control of intake (note any button above the buttons take precedent and we never get here)
     	else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05
     			|| Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(3)) > .05){
@@ -1253,7 +1253,7 @@ public void disabledInit(){
     		}else {
     			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), m_RobotInterface.GetOperatorJoystick().getRawAxis(3));
     		}
-    	} 
+    	} */
     	else 
     	{
     		m_Intake.StopIntake();
@@ -1295,9 +1295,9 @@ public void disabledInit(){
     	} else if (m_RobotInterface.GetOperatorButton(10)) {
     		m_Roller.set(-.80);
         // This goes along with the Variable intake
-        } else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05) {
+        }/* else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05) {
         	m_Roller.set(rollerMotorDeadZone+speed_relative_to_intake_wheels*m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
-    	} else {
+    	} */else {
     		m_Roller.set(0.0);
     	}
     }
