@@ -31,10 +31,11 @@ public class Catapult implements Subsystem {
 		long milliSecondsTillReverse = (long) (secondsTillReverse*1000);
 		int nanoSecondTillReverse = (int) (secondsTillReverse*1000*1000000 - milliSecondsTillReverse*1000000);
 
-		//Define the sepearte thread 
+		//Create a new seperate thread that is just wanting to start running (but can't until we tell it to start) 
         Thread t = new Thread(() -> {
         	try {
-        		Instant start = Instant.now();
+
+        		long nanoStart = System.nanoTime();
         		m_LeftSolenoid.set(Value.kForward);
         		m_RightSolenoid.set(Value.kForward);
         		
@@ -42,11 +43,11 @@ public class Catapult implements Subsystem {
         		
         		m_LeftSolenoid.set(Value.kReverse);
         		m_RightSolenoid.set(Value.kReverse);
-        		Instant end = Instant.now();
+				long nanoEnd = System.nanoTime();
+				
+	     		double howLongActualFired= (double) (nanoEnd-nanoStart)/(double)1000000000;
         		
-        		double howLongActualFired = (end.getNano()-start.getNano())/1000000000;
-        		
-        		System.out.println("Catapult.LaunchTimeLimited thread: Wanted to fire for "+secondsTillReverse+" seconds; Catapult actually Fired for "+howLongActualFired+ " seconds.  Error was " +(howLongActualFired -secondsTillReverse)+ " seconds.");
+        		System.out.println("Catapult.LaunchTimeLimited thread: Wanted to fire for "+(double)secondsTillReverse+" seconds; Catapult actually Fired for "+howLongActualFired+ " seconds.  Error was " +(howLongActualFired -secondsTillReverse)+ " seconds.");
         		
         	} catch (InterruptedException e) {
         		// TODO Auto-generated catch block
@@ -54,7 +55,7 @@ public class Catapult implements Subsystem {
         	}
         });
         
-        // start the thread that will run the above code totally indipendently of the normal robot thread
+        // start the thread that will run the above code totally independently of the normal robot thread
         t.start();
 
 	}

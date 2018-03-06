@@ -119,7 +119,7 @@ public class Robot extends IterativeRobot
 	BTMacroPlay m_BTMacroPlay;
 	BTMacroPlay m_PlaybackScaleToSwitch;
 	
-	boolean isRecording = false;
+	boolean isRecording = true;// default so it is always recording during teleopp
 	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
 	//few different auto programs
 		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
@@ -194,7 +194,7 @@ public class Robot extends IterativeRobot
     
 	@Override
 	public void teleopInit(){
-		isRecording= false;
+		isRecording= true;// have it recording all the time
     	// Record Playback
     	try{
     		m_BTMacroRecord = new BTMacroRecord();
@@ -1078,8 +1078,6 @@ public class Robot extends IterativeRobot
     	GetDashboardData();
     	WriteDashboardData();
     	
-    	//Testing will only do something if on LilGeek (ie not on Lisa)
-    	testTimingCatapultTimeLimited();
     	
     }
     
@@ -1102,7 +1100,7 @@ public class Robot extends IterativeRobot
 			}
 			catch (Exception e) 
 			{
-				e.printStackTrace();
+				System.out.println("Robot.record4LaterPlayback() excepiton e="+e);	
 			}
 		}
 		
@@ -1401,8 +1399,8 @@ public void disabledInit(){
 	
 	// Test the CatapultTimeLimited, timing accuracy
 	Instant lastThrow = Instant.now();
-	int cycleBufferMilli = 30;//Time to wait between cycles
-	int cycleCurrentLength = 100; 
+	int cycleBufferMilli = 100;//Time to wait between cycles
+	int cycleCurrentLength = 20; 
 	int cycleStartIncrement = 5;
 	int cyclesToRun = 50;
 	int cycleOnNow = 0;
@@ -1416,11 +1414,11 @@ public void disabledInit(){
 					//	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
 					//}
 					Instant now = Instant.now();
-					if (       now.getLong(ChronoField.MILLI_OF_SECOND)
-							-lastThrow.getLong(ChronoField.MILLI_OF_SECOND)
+					if (       now.toEpochMilli()-lastThrow.toEpochMilli()
 							> cycleCurrentLength+cycleBufferMilli ) {
 						double secondsTillReverse = (double)cycleCurrentLength/(double)1000;
-						
+
+
 						long milliSecondsTillReverse = (long) (secondsTillReverse*1000);
 						int nanoSecondTillReverse = (int) (secondsTillReverse*1000*1000000 - milliSecondsTillReverse*1000000);
 						
@@ -1428,10 +1426,22 @@ public void disabledInit(){
 					    Thread t = new Thread(() -> {
 					    	try {
 					     		Instant start = Instant.now();
+								long nanoStart = System.nanoTime();
 					     		Thread.sleep(milliSecondsTillReverse, nanoSecondTillReverse);
+								long nanoEnd = System.nanoTime();
 					     		Instant end = Instant.now();
-					     		double howLongActualFired = (end.getNano()-start.getNano())/1000000000;
-					     		System.out.println("Robot.testTimingCataputlTimeLimited thread: Wanted to wait for "+secondsTillReverse+" seconds; actually wait was "+howLongActualFired+ " seconds.  Error was " +(howLongActualFired -secondsTillReverse)+ " seconds.");
+					     		
+//					     		double howLongActualFired = (end.getNano()-start.getNano())/1000;
+//					     		double howLongActualFired = (end.getLong(ChronoField.MICRO_OF_SECOND)-start.getLong(ChronoField.MICRO_OF_SECOND));
+					     		double howLongActualFired = (end.toEpochMilli()-start.toEpochMilli());
+					     		double howLongActualFiredNano = (nanoEnd-nanoStart);
+
+					     		System.out.println("Robot.testTimingCataputlTimeLimited thread: Wanted "+secondsTillReverse*1000+" milli-seconds; actually wait was "
+//					     		+howLongActualFired+ " micro-seconds("+end.getNano()+"-"+start.getNano()+").  Error was " +(howLongActualFired -secondsTillReverse*1000000)+ " micro-seconds.");
+//					     		+howLongActualFired+ " micro-seconds("+end.getLong(ChronoField.MICRO_OF_SECOND)+"-"+start.getLong(ChronoField.MICRO_OF_SECOND)+").  Error was " +(howLongActualFired -secondsTillReverse*1000000)+ " micro-seconds.");
+//					     		+howLongActualFired+ " milli-seconds("+end.toEpochMilli()+"-"+start.toEpochMilli()+").  Error was " +(howLongActualFired -secondsTillReverse*1000)+ " milli-seconds.");
+//					     		+(double)howLongActualFiredNano/1000000+ " milli-seconds("+(double) nanoEnd/1000000+"-"+(double)nanoStart/1000000+").  Error was " +((double)howLongActualFiredNano/1000000 -(double)(secondsTillReverse*1000))+ " milli-seconds.");
+					     		+(double)howLongActualFiredNano/1000000+ " milli-seconds.  Error was " +((double)howLongActualFiredNano/1000000 -(double)(secondsTillReverse*1000))+ " milli-seconds.");
 					     	} catch (InterruptedException e) {
 					     		e.printStackTrace();
 					     	}
