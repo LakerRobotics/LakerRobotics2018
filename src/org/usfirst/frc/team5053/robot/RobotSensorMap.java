@@ -30,9 +30,9 @@ public class RobotSensorMap
 	private final int rightDriveEncoderADIO = 3; //2
 	private final int rightDriveEncoderBDIO = 2; //3
 	private final int elevatorEncoderADIO = 4;
-	private final int elevatorEncoderBDIO = 5;
-	private final int elevatorLimitHighDIO = 6;
-	private final int elevatorLimitLowDIO = 7;
+	private final int elevatorEncoderBDIO = 7;
+	private final int elevatorLimitHighDIO = 5;
+	private final int elevatorLimitLowDIO = 6;
 	
 	
 	private Encoder m_LeftDrive;
@@ -48,12 +48,13 @@ public class RobotSensorMap
 	public RobotSensorMap()
 	{
 		m_LeftDrive = new Encoder(leftDriveEncoderADIO, leftDriveEncoderBDIO);
-		m_LeftDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
-		m_LeftDrive.setReverseDirection(true); // False
+
+		m_LeftDrive.setDistancePerPulse(RobotConstants.getEncoderDistancePerPulse()); //Distance in inches
+		m_LeftDrive.setReverseDirection(RobotConstants.getLeftEncoderInverted());
 		
 		m_RightDrive = new Encoder(rightDriveEncoderADIO, rightDriveEncoderBDIO);
-		m_RightDrive.setDistancePerPulse(6*Math.PI/1024); //Distance in inches
-		//m_RightDrive.setReverseDirection(true);
+		m_RightDrive.setDistancePerPulse(RobotConstants.getEncoderDistancePerPulse()); //Distance in inches
+		m_RightDrive.setReverseDirection(RobotConstants.getRightEncoderInverted());
 		
 		m_Elevator = new Encoder(elevatorEncoderADIO, elevatorEncoderBDIO);
 		m_Elevator.setDistancePerPulse(1/360);
@@ -73,18 +74,20 @@ public class RobotSensorMap
 	{
 		return m_RightDrive;
 	}
-	public ADXRS450_Gyro getGyro() 
-	{
-		return m_Gyro;
-	}
 	public Encoder getElevatorEncoder()
 	{
 		return m_Elevator;
 	}
-	public DigitalInput getElevatorLimitHigh() {
+	public ADXRS450_Gyro getGyro() 
+	{
+		return m_Gyro;
+	}
+	public DigitalInput getElevatorLimitHigh() 
+	{
 		return m_ElevatorLimitHigh;
 	}
-	public DigitalInput getElevatorLimitLow() {
+	public DigitalInput getElevatorLimitLow() 
+	{
 		return m_ElevatorLimitLow;
 	}
 }

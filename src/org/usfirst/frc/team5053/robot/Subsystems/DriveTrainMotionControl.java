@@ -2,6 +2,7 @@ package org.usfirst.frc.team5053.robot.Subsystems;
 
 import java.util.HashMap;
 
+import org.usfirst.frc.team5053.robot.RobotConstants;
 import org.usfirst.frc.team5053.robot.Subsystems.Utilities.AnglePIDWrapper;
 import org.usfirst.frc.team5053.robot.Subsystems.Utilities.MotionController;
 import org.usfirst.frc.team5053.robot.Subsystems.Utilities.SwingPIDWrapper;
@@ -65,7 +66,7 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		m_SwingPIDWrapper = new SwingPIDWrapper(this);
 		
-		m_SwingPID = new PIDController(0.07, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
+		m_SwingPID = new PIDController(0.1, 0.0, 0.0, m_SwingPIDWrapper, m_SwingPIDWrapper);
 		m_SwingPID.setOutputRange(-0.75, 0.75);
 		m_SwingPID.setAbsoluteTolerance(SWING_TOLERANCE);
 	}
@@ -246,11 +247,11 @@ public class DriveTrainMotionControl extends DifferentialDrive implements Subsys
 		
 		if (m_swingTurnRight) 
 		{
-			this.tankDrive(0, turnSpeed);
+			this.tankDrive(0, turnSpeed * RobotConstants.getRotationControllerInverted());
 		} 
 		else 
 		{
-			this.tankDrive(-turnSpeed, 0);
+			this.tankDrive(-turnSpeed * RobotConstants.getRotationControllerInverted(), 0);
 		}
 	}
 	public boolean SwingAngleOnTarget()

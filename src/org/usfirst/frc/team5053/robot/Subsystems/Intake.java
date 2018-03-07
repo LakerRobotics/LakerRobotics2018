@@ -22,20 +22,20 @@ public class Intake implements Subsystem {
 		
 	}
 	public void IntakeCube() {
-		m_LeftIntake.set(1.0);
-		m_RightIntake.set(-1.0);
+		m_LeftIntake.set(0.8);
+		m_RightIntake.set(-0.8);
 	}
 	public void ReleaseCube() {
-		m_LeftIntake.set(-1.0);
-		m_RightIntake.set(1.0);
+		m_LeftIntake.set(-0.8);
+		m_RightIntake.set(0.8);
 	}
 	public void RotateLeft() {
-		m_LeftIntake.set(1.0);
-		m_RightIntake.set(1.0);
+		m_LeftIntake.set(0.8);
+		m_RightIntake.set(0.8);
 	}
 	public void RotateRight() {
-		m_LeftIntake.set(-1.0);
-		m_RightIntake.set(-1.0);
+		m_LeftIntake.set(-0.8);
+		m_RightIntake.set(-0.8);
 	}
 	public void StopIntake() {
 		m_LeftIntake.set(0.0);
@@ -44,6 +44,10 @@ public class Intake implements Subsystem {
 	public void AdjustableSpeed(double speed) {
 		m_LeftIntake.set(speed);
 		m_RightIntake.set(-speed);
+	}
+	public void AdjustableSpeedWithTwist(double speed, double twist) {
+		m_LeftIntake.set(speed-twist);
+		m_RightIntake.set(-speed-twist);
 	}
 	
 	public boolean getSolenoidState()

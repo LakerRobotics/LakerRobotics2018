@@ -1,5 +1,10 @@
 package org.usfirst.frc.team5053.robot;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
 import org.usfirst.frc.team5053.robot.RobotInterfaceMap.JoystickType;
 import org.usfirst.frc.team5053.robot.Sensors.LidarLite;
 import org.usfirst.frc.team5053.robot.Subsystems.Catapult;
@@ -15,6 +20,9 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import org.usfirst.frc.team5053.robot.record_playback.BTMacroRecord;
+import org.usfirst.frc.team5053.robot.record_playback.BTMacroPlay;
 
 
 /**
@@ -74,7 +82,13 @@ public class Robot extends IterativeRobot
 	//Vision declaration
 	
 	//Subsystem constants
-
+	
+	// setup for variable control intake the speed of the roller relative to the wheels
+	private double speedOfIntake = /*gearRatio*/(24/1)*/*Diameter*/4.00;
+	private double speedOfRollers = /*gearRatio*/(5/1)*/*Diameter*/2.5;
+	private double rollerMotorDeadZone = 0.15;
+	private double speed_relative_to_intake_wheels =  3*(speedOfRollers/speedOfIntake); // RGT 20180303 looks like only 0.13 is not enough to gaurntee the wheels will turn, but add dead zone and 3 times that is
+	// private double speed_relative_to_intake_wheels = 0.25; // if the complexity above is not a good guess just start playing with this number
 	//Vision constants
 	
 	//Autonomous variables
@@ -98,6 +112,18 @@ public class Robot extends IterativeRobot
 	private double[] diagnosticPowerSent;
 	private int arrIndex;
 	
+	// Record Playback
+	BTMacroRecord m_BTMacroRecord;
+	BTMacroPlay m_BTMacroPlay;
+	BTMacroPlay m_PlaybackScaleToSwitch;
+	
+	boolean isRecording = false;
+	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
+	//few different auto programs
+		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
+		//autoFile is a global constant that keeps you from recording into a different file than the one you play from
+		public static final String autoFile = new String("/home/lvuser/recordedAuto");
+		public static final String recorderFileMaxNumber = new String("/home/lvuser/recorderMaxNumber.csv");
 	
 	
 	//Misc variables
@@ -106,6 +132,7 @@ public class Robot extends IterativeRobot
 	private final double kTransfer = -10000.0; //-13290.0
 	private final double kLow = 0.0;
 	private final double kHigh = -19569.0;
+	private int transferIntakeCase = 0;
 	
 	private double m_driveSpeed = 1.0;
 	
@@ -115,6 +142,7 @@ public class Robot extends IterativeRobot
 	private int m_shortCatapultDelay = 0;
 	private boolean isShotFinished = true;
 	private boolean hasElevatorEncoderZeroed = false;
+	private final String m_robotName = RobotConstants.getRobotName();
 	
 	@Override
     public void robotInit()
@@ -130,19 +158,26 @@ public class Robot extends IterativeRobot
     	
     	//Robot Subsystem Initialization
     	m_DriveTrain = new DriveTrainMotionControl(m_RobotControllers.getLeftDriveGroup(), m_RobotControllers.getRightDriveGroup(), m_RobotSensors.getLeftDriveEncoder(), m_RobotSensors.getRightDriveEncoder(), m_RobotSensors.getGyro());
-    	m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorLimitHigh(), m_RobotSensors.getElevatorLimitLow());
-    	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
-    	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
-    	m_Roller = m_RobotControllers.getRoller();
+    	if (m_robotName == "lisa") {
+    		m_Elevator = new Elevator(m_RobotControllers.getElevator(), m_RobotSensors.getElevatorLimitHigh(), m_RobotSensors.getElevatorLimitLow());
+        	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
+        	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
+        	m_Roller = m_RobotControllers.getRoller();
+        	
+        	CameraServer server = CameraServer.getInstance();
+        	server.startAutomaticCapture();
+        	
+        	
+        	m_Compressor = new Compressor(0);
+
+        	//m_Compressor.start();
+        	m_Compressor.setClosedLoopControl(true);
+    	}
+    	
     	// Scaler
     	
-    	CameraServer server = CameraServer.getInstance();
-    	server.startAutomaticCapture();
     	
-    	m_Compressor = new Compressor(0);
-
-    	//m_Compressor.start();
-    	m_Compressor.setClosedLoopControl(true);
+    	
     	
     	// Diagnostic variable initialization
     	//m_NetworkTable =  NetworkTable.getTable("SmartDashboard");
@@ -153,12 +188,28 @@ public class Robot extends IterativeRobot
     	arrIndex = 0;
     	
     }
+    
+    
+	@Override
+	public void teleopInit(){
+		isRecording= false;
+    	// Record Playback
+    	try{
+    		m_BTMacroRecord = new BTMacroRecord();
+		}
+		catch(Exception e){
+			System.out.print("Robot.teleopInit() Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
 
+	}
+
+	@Override
     public void autonomousInit() 
     {
     	 /**
          * This function is called once when autonomous begins
          */
+         
     	
     	// Initialize autonomous variables
     	autonomousCase = 0;
@@ -166,7 +217,7 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	autonRoutine = "test"; //SmartDashboard.getString("Auton Selection", "center scale");		// Start position of the robot from our side of the field
+    	autonRoutine = SmartDashboard.getString("Auton Selection", "test");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Step", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -183,25 +234,68 @@ public class Robot extends IterativeRobot
     		scaleTurn = -1; // Final turn is always Counter clockwise when the scale is on the right side
     	else
     		scaleTurn = 1; // And vice versa
+    		
+   		// Record Playback
+    	int AfterScaleRightShotToRightSwitch = 1;	        
+    	int AfterScaleRightShotToLeftSwitch = 1;	        
+    	int AfterScaleLeftShotToRightSwitch = 1;	        
+    	int AfterScaleLeftShotToLeftSwitch = 1;	        
+    	try{
+    		// This is playback lates record
+    		m_BTMacroPlay = new BTMacroPlay(); // note this should initalize the file open to read from
+    				
+    	// This sets up the movement from the Scale shot to the switch shot  
+    	if(scaleChar == 'R'){
+    		if(switchChar == 'R'){
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleRightShotToRightSwitch);
+    	    }
+    		else{
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleRightShotToLeftSwitch);    	
+    		}
+    	}else{ // was Left scale
+    		if(switchChar == 'R'){
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleLeftShotToRightSwitch);
+    	    }
+    		else{
+				m_PlaybackScaleToSwitch = new BTMacroPlay(AfterScaleLeftShotToLeftSwitch);    	
+    		}
+    	
+    	}
+		}
+		catch(Exception e){
+			System.out.print("Error creating record-n-playback objects, maybe couldn't create the file. The error is"+e);
+		}
+    		
     	
     	m_DriveTrain.ResetGyro();
     	m_DriveTrain.ResetEncoders();
-    	m_Elevator.resetEncoder();
+    	if (m_robotName == "lisa") {
+    		m_Elevator.resetEncoder();
+    	}
     }
 
     public void autonomousPeriodic()
     {
+    	boolean debug_record_playback = false;
+    	if(debug_record_playback){
+    		m_BTMacroPlay.play(m_RobotControllers);
+    	}
+    	else
+    	{
 		
     	/**
          * This function is called periodically during autonomous
          */
-    	if (!hasElevatorEncoderZeroed) {
-    		m_Elevator.manualControl(-.30);
-    	}
-    	if (m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
-    		m_Elevator.resetEncoder();
-    		hasElevatorEncoderZeroed = true;
-    	}
+    		if (m_robotName == "lisa") {
+    			if (!hasElevatorEncoderZeroed) {
+    	    		m_Elevator.manualControl(0.30);
+    	    	}
+    	    	if (!m_Elevator.getLimitLow() && !hasElevatorEncoderZeroed) {
+    	    		m_Elevator.resetEncoder();
+    	    		hasElevatorEncoderZeroed = true;
+    	    	}
+    		}
+    	
     	switch(autonRoutine.toLowerCase())
     	{
     	case "none": // NO AUTON
@@ -210,34 +304,41 @@ public class Robot extends IterativeRobot
     		switchCenter();
 			break;
     	case "left scale": // LEFT AUTON SCALE FIRST
-    		//scaleLeftRight();
-    		worstCaseScenarioScaleLeftRightTest();
+    		scaleLeftRight();
+    		//worstCaseScenarioScaleLeftRightTest();
     		break;
     	case "center scale": // CENTER AUTON SCALE
     		scaleCenter();
     		break;
     	case "right scale": // RIGHT AUTON SCALE FIRST
-    		//scaleLeftRight();
-    		worstCaseScenarioScaleLeftRightTest();
+    		scaleLeftRight();
+    		//worstCaseScenarioScaleLeftRightTest();
     		break;
     	case "diagnostic": // DEBUG AUTO
 			diagnosticTest();
 			break;
     	case "test":
-    		switchShotTest();
+    		//switchShotTest();
     		//swingTest();
-    		//straightTest();
+    		straightTest();
     		//controlledAngleTest();
     		//turnTest();
+    		//switchCenter();
+    		//worstCaseScenarioScaleLeftRightTest();
+    		break;
+    	case "playback":
+    		m_BTMacroPlay.play(m_RobotControllers);
     		break;
 		default: // NO AUTON
 			break;
+    	}
     	}
     	
     	GetDashboardData();
     	WriteDashboardData();
     	
     	autonomousWait++;
+    	
     }
     
     public void controlledAngleTest()
@@ -332,24 +433,27 @@ public class Robot extends IterativeRobot
     }
     public void switchShotTest()
     {
-    	switch(autonomousCase)
-    	{
-        case 0: // Launch cube into switch with the short shot
-    		m_ThePult.Launch();
-    			
-			autonomousWait = 0;
-			autonomousCase++;
-			break;
-    	case 1:
-    		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
-    		{
-    			m_ThePult.Arm();
-        		autonomousCase++;
-    		}
-    		break;
-    	case 2:
-    		break;
+    	if (m_robotName == "lisa") {
+    		switch(autonomousCase)
+        	{
+            case 0: // Launch cube into switch with the short shot
+        		m_ThePult.Launch();
+        			
+    			autonomousWait = 0;
+    			autonomousCase++;
+    			break;
+        	case 1:
+        		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
+        		{
+        			m_ThePult.Arm();
+            		autonomousCase++;
+        		}
+        		break;
+        	case 2:
+        		break;
+        	}
     	}
+    	
     }
     
     public void diagnosticTest()
@@ -449,15 +553,18 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
     			if(switchChar == 'L')
     			{
-            		m_DriveTrain.DriveControlledAngle(-12*4.5, 8, 5, -30);
+            		m_DriveTrain.DriveControlledAngle(-12*3.5, 8, 5, -30);
     			}
     			else
     			{
-    				m_DriveTrain.DriveControlledAngle(-12*4, 8, 5, 30);
+    				m_DriveTrain.DriveControlledAngle(-12*3.5, 8, 5, 30);
     			}
     			
-    			m_ThePult.Arm();
-    			m_Elevator.setPosition(kHigh);
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    				m_Elevator.setPosition(kHigh);
+    			}
+    			
         		autonomousCase++;
     		}
     		break;
@@ -481,17 +588,26 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			
-    			m_ThePult.Launch();
+    			///TODO
+    			if (m_robotName == "lisa" && (Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kHigh)) <= 2000 ) 
+    			{
+    				m_ThePult.Launch();
+    				autonomousCase++;
+    			}
+    			else
+    			{
+        			autonomousCase = 5;
+    			}
     			
     			autonomousWait = 0;
-    			autonomousCase++;
     		}
     		break;
     	case 4:
     		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
     		{
-    			m_ThePult.Arm();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    			}
     			autonomousCase++;
     		}
     		break;
@@ -512,13 +628,17 @@ public class Robot extends IterativeRobot
 	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
-    			m_DriveTrain.DriveDistance(-(19*12/*Decision Point*/ + 70.5/*Decision point to scale*/), 4, 1);
-    			m_Elevator.setPosition(kHigh);
+    			m_DriveTrain.DriveDistance(-(11*12/*Decision Point*/ + 70.5/*Decision point to scale*/), 5, 1);
+    			if (m_robotName == "lisa") {
+    				m_Elevator.setPosition(kHigh);
+    			}
     			autonomousCase = 8; // ******Jump to the end of the routine
     		break;
     	case 2: // Drive to the decision point
-    		m_DriveTrain.DriveDistance(19*12, 4, 1);
-    		m_Elevator.setPosition(kHigh);
+    		m_DriveTrain.DriveDistance(-11*12, 8, 1);
+    		if (m_robotName == "lisa") {
+    			m_Elevator.setPosition(kHigh);
+    		}
     		autonomousCase++;
     		break;
     	case 3: // Turn to cross the field
@@ -541,11 +661,11 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
     		if(scaleChar == 'R')
     		{
-    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, 90);
+    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, 90);
     		}
     		else
     		{
-    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, -90);
+    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, -90);
     		}
 			autonomousCase++;
     		break;
@@ -602,7 +722,16 @@ public class Robot extends IterativeRobot
         		autonomousCase++;
     		}
     		break;
-    	case 10:
+    	case 10:// Go do the Switch
+    		if(!m_PlaybackScaleToSwitch.isDone()){
+    			m_PlaybackScaleToSwitch.play(m_RobotControllers);
+    		}
+    		else{
+        		autonomousCase++;
+    		}
+    		break;
+    	case 11:
+    	
     		break;
     	}
     }
@@ -636,7 +765,9 @@ public class Robot extends IterativeRobot
     			
         		m_DriveTrain.DriveControlledAngle(-8*12, 8, 5, -45*scaleTurn);
         		
-        		m_Elevator.setPosition(kHigh);
+        		if (m_robotName == "lisa") {
+        			m_Elevator.setPosition(kHigh);
+        		}
         		
         		autonomousCase++;
     		}
@@ -664,7 +795,10 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
     			m_DriveTrain.DriveControlledAngle(-6*12, 6, 8, 0);
     			
-    			m_ThePult.Arm();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    			}
+    			
     			
     			autonomousCase++;
     		}
@@ -690,7 +824,9 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_ThePult.Launch();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Launch();
+    			}
     			autonomousCase++;
     		}
     		break;
@@ -734,7 +870,9 @@ public class Robot extends IterativeRobot
     	case 7:
     		if (m_DriveTrain.SwingAngleOnTarget()) 
     		{
-    			m_ThePult.Arm();
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Arm();
+    			}
     			
     			m_DriveTrain.DisablePIDControl();
     			
@@ -831,11 +969,11 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
 	    		if(scaleChar == 'R')
 	    		{
-	    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, 90);
+	    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, 90);
 	    		}
 	    		else
 	    		{
-	    			m_DriveTrain.DriveControlledAngle(-15*12, 5, 5, -90);
+	    			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, -90);
 	    		}
 				autonomousCase++;
     		}
@@ -891,7 +1029,10 @@ public class Robot extends IterativeRobot
     		{
     			m_DriveTrain.disableSwingPID();
     			
-    			m_ThePult.Launch();
+    			
+    			if (m_robotName == "lisa") {
+    				m_ThePult.Launch();
+    			}
         		autonomousCase++;
     		}
     		break;
@@ -906,7 +1047,9 @@ public class Robot extends IterativeRobot
     	/**
          * This function is called periodically during operator control
          */
-    	m_Compressor.setClosedLoopControl(true);
+    	if (m_robotName == "lisa") {
+    		m_Compressor.setClosedLoopControl(true);
+    	}
     	
     	// For quick testing reset
     	if(autonomousCase != 0)
@@ -917,16 +1060,63 @@ public class Robot extends IterativeRobot
     	
     	// Subsystem methods
     	arcadeDrive();
-    	elevatorControl();
-    	intakeControl();
-    	catapultControl();
-    	rollerControl();
+    	if (m_robotName == "lisa") {
+        	intakeControl();
+        	catapultControl();
+        	//switchCatapultShot();
+        	rollerControl();
+    		elevatorControl();// elevator has to come last because transfer button will override other buttons, so specifically the intake and roller
+    	}
+    	
     	
     	// Other
-    	
+      	record4LaterPlayback();
+      	
     	//Misc variable updates
     	GetDashboardData();
     	WriteDashboardData();
+    	
+    }
+    
+    public void record4LaterPlayback()
+    {
+	//Record for record playback
+    	//the statement in this "if" checks if a button you designate as your record button 
+    	//has been pressed, and stores the fact that it has been pressed in a variable
+    	//System.out.println("Robot.record4LaterPlayback() m_RobotInterface.GetRecord()="+m_RobotInterface.GetDriverButton(11)+"  isRecording="+isRecording);
+    	if (m_RobotInterface.GetDriverButton(11)) 
+		{
+    		isRecording = true;
+		}  
+		//if our record button has been pressed, lets start recording!
+		if (isRecording)
+		{
+   		try
+    		{
+    			m_BTMacroRecord.record(m_RobotControllers);
+			}
+			catch (Exception e) 
+			{
+				e.printStackTrace();
+			}
+		}
+		
+  }    
+    
+public void disabledInit(){
+		//once we're done recording, the last thing we'll do is clean up the recording using the end
+		//function. more info on the end function is in the record class
+    	try 
+    	{
+    		if(m_BTMacroRecord != null)
+    		{
+    			m_BTMacroRecord.end();
+    		}
+		} 
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
     	
     }
 
@@ -952,7 +1142,7 @@ public class Robot extends IterativeRobot
     	 	m_driveSpeed = 1.0;
     	}
     	// - | +
-    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, m_RobotInterface.GetDriverRightX()*m_driveSpeed);
+    	m_DriveTrain.ArcadeDrive(-m_RobotInterface.GetDriverLeftY()*m_driveSpeed, RobotConstants.getArcadeDriveInverted() * m_RobotInterface.GetDriverRightX()*m_driveSpeed );
     	
    }
     public void elevatorControl() {
@@ -969,18 +1159,69 @@ public class Robot extends IterativeRobot
     	//{
     	//	m_Elevator.setPosition(kHigh);
     	//} 
-    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
+    	else if (m_RobotInterface.GetOperatorButton(8)) 
+    	{
+    		m_Elevator.setPosition(kTransfer);
+    		if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 2000 ) 
+    		{
+    			m_Intake.IntakeCube();
+    		}
+    	}  else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(1)) > .05) 
     	{
     		m_Elevator.disablePID();
     		// Elevator power is halved to prevent damage to the elevator when manually controlled
-    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.5);
-    	}
-    	if (m_RobotInterface.GetOperatorButton(8)) {
-    		m_Elevator.setPosition(kTransfer);
-    		if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 1500 ) {
-    			m_Intake.IntakeCube();
+    		m_Elevator.manualControl(m_RobotInterface.GetOperatorJoystick().getRawAxis(1) * 0.75);
+    	}	
+    	/*if (m_RobotInterface.GetOperatorButton(8)) 
+    	{
+    		int transferIntakeVersion  = 2;
+    		if (transferIntakeVersion == 1){
+    			m_Elevator.setPosition(kTransfer);
+    			if ((Math.abs(m_Elevator.getCurrentPosition()) - Math.abs(kTransfer)) <= 1500 ) {
+    				m_Intake.IntakeCube();
+    			}
+    		}else{
+    			switch (transferIntakeCase)
+    			{
+    			case  0:// ensure Cube  is squeezed
+    				m_Intake.retractIntake();
+    				transferIntakeCase++;
+    				break;
+    			case  1: // Move Cube up
+    	    		m_Elevator.disablePID();
+    				m_Elevator.manualControl(0.5);
+    				transferIntakeCase++;
+        			break;
+        		case  2: // Move Cube back into catapult
+    				if(m_Elevator.getCurrentPosition()>kTransfer-250) 
+    				{
+    					m_Elevator.setPosition(kTransfer);// so we start PID control 0.25" below the target
+    					//m_Intake.IntakeCube();//RGT 20180304 this is currently way to fast in my opinion at 100%
+    					m_Intake.AdjustableSpeed(0.5);
+    					m_Roller.set(0.35);
+    					transferIntakeCase++;
+    				}
+        			break;
+        		case 3:
+    				// Continue to overide any of the other buttons they might be pressing (this one take priority) if they don't like that they will release the button 
+					m_Elevator.setPosition(kTransfer);// think normally we would do this at next case but I want this to be fast and not waste a cycle overshoting the transfer height, so we start 0.25" below the target
+					m_Intake.AdjustableSpeed(0.5);
+					m_Roller.set(0.35);
+    				break;
+    			}
     		}
-    	}
+    	}else {
+    		// See if they just released the button
+    		if(transferIntakeCase>0) 
+    		{
+    			m_Elevator.disablePID();
+				m_Intake.ReleaseCube();
+				m_Intake.AdjustableSpeed(0);
+				m_Roller.set(0);
+				transferIntakeCase=0;
+    		};
+    	}*/
+    	
     }
     public void intakeControl() {
     	if (m_RobotInterface.GetOperatorButton(3) && !m_RobotInterface.GetOperatorButton(4)) 
@@ -999,10 +1240,21 @@ public class Robot extends IterativeRobot
     	{
     		m_Intake.RotateLeft();
     	} 
-    	else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
+    	/*else if (Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05){
     		m_Intake.AdjustableSpeed(m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
     	} 
-    	else 
+    	// if joystick left-right more then 5% or twist more then 5% then variable joystick control of intake (note any button above the buttons take precedent and we never get here)
+    	else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05
+    			|| Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(3)) > .05){
+    		// if twist is less then 5% then just straight intake
+    		if( Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(3)) < .05) {
+    			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), 0);
+    		// else twist power is more then 5% so apply variable twist power
+    		}else {
+    			m_Intake.AdjustableSpeedWithTwist(m_RobotInterface.GetOperatorJoystick().getRawAxis(2), m_RobotInterface.GetOperatorJoystick().getRawAxis(3));
+    		}
+    	} */
+    	else if (!m_RobotInterface.GetOperatorButton(8))
     	{
     		m_Intake.StopIntake();
     	}
@@ -1038,11 +1290,14 @@ public class Robot extends IterativeRobot
     	
     }
     public void rollerControl() {
-    	if (m_RobotInterface.GetOperatorButton(11)) {
+    	if (m_RobotInterface.GetOperatorButton(9)) {
     		m_Roller.set(.80);
-    	} else if (m_RobotInterface.GetOperatorButton(12)) {
+    	} else if (m_RobotInterface.GetOperatorButton(10)) {
     		m_Roller.set(-.80);
-    	} else {
+        // This goes along with the Variable intake
+        }/* else if (  Math.abs(m_RobotInterface.GetOperatorJoystick().getRawAxis(2)) > .05) {
+        	m_Roller.set(rollerMotorDeadZone+speed_relative_to_intake_wheels*m_RobotInterface.GetOperatorJoystick().getRawAxis(2));
+    	} */else {
     		m_Roller.set(0.0);
     	}
     }
@@ -1079,9 +1334,65 @@ public class Robot extends IterativeRobot
     	SmartDashboard.putNumber("Auton Case", autonomousCase);
     	SmartDashboard.putBoolean("isShotFinished", isShotFinished);
     	SmartDashboard.putNumber("Switch Catapult Delay", m_shortCatapultDelay);
+    	
     	m_DriveTrain.WriteDashboardData();
-    	m_Elevator.WriteDashboardData();
-    	m_ThePult.WriteDashboardData();
-    	m_Intake.WriteDashboardData();
+    	if (m_robotName == "lisa") {
+    		m_Elevator.WriteDashboardData();
+        	m_ThePult.WriteDashboardData();
+        	m_Intake.WriteDashboardData();
+    	}
+    	
     }
+    
+    public static int getMaxRecorderFileNumber()
+    {
+    	int intToReturn = 0;
+		//create a scanner to read the file created during BTMacroRecord
+		//scanner is able to read out the doubles recorded into recordedAuto.csv (as of 2015)
+		File fileMaxNumber = new File(Robot.recorderFileMaxNumber);
+		try
+		{
+			Scanner scannerMaxNumber = new Scanner(fileMaxNumber);
+		
+			//let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
+			scannerMaxNumber.useDelimiter(",|\\n");
+		
+			if (scannerMaxNumber.hasNextInt())
+			{
+				intToReturn = scannerMaxNumber.nextInt();
+			}
+			else{
+				intToReturn = 0;
+			}
+			scannerMaxNumber.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
+		}
+		return intToReturn;
+    }
+		
+	public static int getNextRecorderFileNumber()
+	{
+		int intToReturn;
+		// increment to next unused number
+		intToReturn = getMaxRecorderFileNumber() + 1;
+		try{
+			System.out.print("NextRecorderFileNumber"+intToReturn);
+		    boolean OVER_WRITE = false;
+//		    boolean APPEND = true;
+			FileWriter writerForAutoFileNumber = new FileWriter(Robot.recorderFileMaxNumber, OVER_WRITE);
+			writerForAutoFileNumber.append(intToReturn + "\n"); 
+			writerForAutoFileNumber.flush();
+			writerForAutoFileNumber.close();
+		}
+		catch(Exception e){
+			System.out.println("Robot.getNextRecorderFileNumber() exception e="+e);
+		}
+			
+		return intToReturn;
+	}
+	
+    
 }
