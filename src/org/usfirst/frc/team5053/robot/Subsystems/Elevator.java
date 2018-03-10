@@ -2,6 +2,7 @@ package org.usfirst.frc.team5053.robot.Subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
@@ -39,6 +40,7 @@ public class Elevator implements Subsystem {
 		
 		
 		m_Talon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 4000);
+		m_Talon.setNeutralMode(NeutralMode.Brake);
 	}
 	public void manualControl(double speed)
 	{

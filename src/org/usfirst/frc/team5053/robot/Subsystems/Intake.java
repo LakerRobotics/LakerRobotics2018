@@ -25,17 +25,21 @@ public class Intake implements Subsystem {
 		m_LeftIntake.set(0.8);
 		m_RightIntake.set(-0.8);
 	}
+	public void TransferCube() {
+		m_LeftIntake.set(-0.5);
+		m_RightIntake.set(0.5);
+	}
 	public void ReleaseCube() {
 		m_LeftIntake.set(-0.8);
 		m_RightIntake.set(0.8);
 	}
 	public void RotateLeft() {
-		m_LeftIntake.set(0.8);
-		m_RightIntake.set(0.8);
+		m_LeftIntake.set(0);
+		m_RightIntake.set(0.5);
 	}
 	public void RotateRight() {
-		m_LeftIntake.set(-0.8);
-		m_RightIntake.set(-0.8);
+		m_LeftIntake.set(-0.5);
+		m_RightIntake.set(0);
 	}
 	public void StopIntake() {
 		m_LeftIntake.set(0.0);
