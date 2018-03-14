@@ -224,7 +224,7 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	autonRoutine = SmartDashboard.getString("Auton Selection", "test");		// Start position of the robot from our side of the field
+    	autonRoutine = SmartDashboard.getString("Auton Selection", "left scale");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Step", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -392,7 +392,7 @@ public class Robot extends IterativeRobot
     	switch(autonomousCase)
     	{
     	case 0:
-    		m_DriveTrain.DriveDistance(120, 8, 20);
+    		m_DriveTrain.DriveDistance(60, 8, 20);
     		autonomousCase++;
     		break;
     	case 1:
@@ -587,7 +587,9 @@ public class Robot extends IterativeRobot
     			{
     				m_DriveTrain.SetSwingParameters(0, false);
     			}
-    			m_Roller.set(.80);
+    			if (m_robotName == "lisa") {
+        			m_Roller.set(.80);
+    			}
     			m_DriveTrain.StartSwingTurn();
     			autonomousCase++;
     		}
@@ -596,17 +598,19 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_DriveTrain.arcadeDrive(.20, 0.0);
+    			m_DriveTrain.arcadeDrive(-.5, 0.0);
 
     			autonomousWait = 0;
     			autonomousCase++;
     		}
     		break;
     	case 4: // Launch cube into switch with the short shot
+    		m_DriveTrain.arcadeDrive(-.5,  0.0);
     		if(autonomousWait >= 25)
     		{
     			
     			///TODO
+    			
     			if (m_robotName == "lisa") 
     			{
     				m_ThePult.Launch();
@@ -622,17 +626,21 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 5:
+    		m_DriveTrain.arcadeDrive(-.5,  0.0);
     		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
     		{
-    			m_DriveTrain.arcadeDrive(0.0, 0.0);
-    			m_Roller.set(0.0);
+    			
+    			
+    			
     			if (m_robotName == "lisa") {
     				m_ThePult.Arm();
+    				m_Roller.set(0.0);
     			}
     			autonomousCase++;
     		}
     		break;
     	case 6:
+    		m_DriveTrain.arcadeDrive(0.0, 0.0);
     		break;
     	}
     }
@@ -643,7 +651,9 @@ public class Robot extends IterativeRobot
     	switch(autonomousCase)
     	{
     	case 0: // Path our routine
-    		m_ThePult.Arm();
+    		if (m_robotName == "lisa") {
+        		m_ThePult.Arm();
+    		}
     		if(scaleChar == autonRoutine.toUpperCase().charAt(0))
     			
 				autonomousCase++; // ******Straight ahead
@@ -651,7 +661,7 @@ public class Robot extends IterativeRobot
 	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
-    			m_DriveTrain.DriveDistance(-(12*12/*Decision Point*/ + 60/*Decision point to scale*/), 6, 10);
+    			m_DriveTrain.DriveDistance(-(13.5*12/*Decision Point*/ + 60/*Decision point to scale*/), 6, 10);
     			if (m_robotName == "lisa") 
     			{
     				m_Elevator.setPosition(kHigh);
@@ -659,7 +669,7 @@ public class Robot extends IterativeRobot
     			autonomousCase = 8;
     		break;
     	case 2: // Drive to the decision point
-    		m_DriveTrain.DriveDistance(-12*12, 6, 10);
+    		m_DriveTrain.DriveDistance(-13.5*12, 6, 10);
     		if (m_robotName == "lisa") {
     			m_Elevator.setPosition(kHigh);
     		}
@@ -746,6 +756,7 @@ public class Robot extends IterativeRobot
     	case 9: // Back up 3ft for shot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
+    			m_DriveTrain.disableSwingPID();
         		m_DriveTrain.DriveDistance(36, 4, 4);
         		// TODO
         		autonomousCase = 12;
