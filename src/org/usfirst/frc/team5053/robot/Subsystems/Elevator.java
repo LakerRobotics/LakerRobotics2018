@@ -23,7 +23,7 @@ public class Elevator implements Subsystem {
 	private final double kd = 0.0;
 	
 	private double m_PositionTarget = 1;
-	private final double TOLERANCE = 200;
+	private double TOLERANCE = 200;
 	
 	
 	
@@ -85,7 +85,10 @@ public class Elevator implements Subsystem {
 	}
 	public boolean isPIDOnTarget()
 	{
-		return (Math.abs(getCurrentPosition()) >= (Math.abs(getPositionTarget() - TOLERANCE))); 
+		return (Math.abs(getPositionTarget()) - Math.abs(getCurrentPosition()) <= TOLERANCE); 
+	}
+	public void setTolerance(double tolerance) {
+		TOLERANCE = tolerance;
 	}
 	public double getCurrentPosition()
 	{
