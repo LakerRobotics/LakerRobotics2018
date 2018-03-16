@@ -911,9 +911,9 @@ public class Robot extends IterativeRobot
     		if (autonomousWait >= 50)
     		{
     			m_DriveTrain.arcadeDrive(0.0, 0.0);
-    		} else {
-    			m_Intake.IntakeCube();
-    		}
+    		} else if (m_robotName == "lisa") {
+				m_Intake.IntakeCube();
+			}
     		break;
     	
     	}
