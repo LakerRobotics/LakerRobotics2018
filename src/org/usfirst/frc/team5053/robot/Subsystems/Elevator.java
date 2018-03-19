@@ -51,8 +51,8 @@ public class Elevator implements Subsystem {
 			speed = 0;
 		}
 		
-		System.out.println("Limit High: " + m_LimitHigh.get());
-		System.out.println("Limit Low: " + m_LimitLow.get());
+		//System.out.println("Limit High: " + m_LimitHigh.get());
+		//System.out.println("Limit Low: " + m_LimitLow.get());
 		m_Talon.set(ControlMode.PercentOutput, speed);
 	}
 	public boolean getLimitHigh() {
@@ -99,6 +99,7 @@ public class Elevator implements Subsystem {
 	{
 		SmartDashboard.putNumber("Elevator Target", getPositionTarget());
 		SmartDashboard.putNumber("Elevator Encoder Position", getCurrentPosition());
+		System.out.println("Elevator Encoder Position: " + getCurrentPosition());
 		SmartDashboard.putString("SRX State", m_Talon.getControlMode().toString());
 	}
 

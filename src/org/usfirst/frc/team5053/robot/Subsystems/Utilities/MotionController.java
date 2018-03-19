@@ -27,9 +27,9 @@ public class MotionController
 	private double m_AngularVelocityTolerance;
 	private boolean m_PIDEnabled;
 	
-	private final double TurnKp = 0.0025;
-	private final double TurnKi = 0.0020;
-	private final double TurnKd = 0.0;
+	private final double TurnKp = 0.01;
+	private final double TurnKi = 0.015;
+	private final double TurnKd = 0.015;
 	
 	private final double StraightKp = 0.001;
 	private final double StraightKi = 0.0;
@@ -59,7 +59,7 @@ public class MotionController
 		m_targetDistance = 0;
 		m_targetAngle = 0;
 		m_StraightTolerance = 0.5;
-		m_TurnTolerance = 0.5;
+		m_TurnTolerance = 2;
 		m_AngularVelocityTolerance = 15;
 		m_PIDEnabled = false;
 		
@@ -102,16 +102,16 @@ public class MotionController
 	{
 		if (!m_PIDEnabled)
 		{
-			m_DriveTrain.ResetGyro();
+			//m_DriveTrain.ResetGyro();
 			
 			//TODO Magic numbers need fixing
 			//TODO What are the units?
 			double maxRPM = 15/*30*/;			// Rotations/Minute
-			double ramp = 30/* 3.5 * maxRPM*/;	// I guess its also rotations per minute?
+			double ramp = 5/* 3.5 * maxRPM*/;	// I guess its also rotations per minute?
 			
 			double maxSpeed = maxRPM * 6; // 360 Degrees/60 seconds to convert RPM to speed or degrees per second
-			double start = m_DriveTrain.GetAngle();
-			m_targetAngle = turnAngle + start;
+			double start = 0;
+			m_targetAngle = turnAngle;
 			
 			if (!(Math.abs(m_DriveTrain.GetAngle()-m_targetAngle) < m_TurnTolerance))
 			{
