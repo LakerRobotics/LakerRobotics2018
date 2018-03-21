@@ -38,6 +38,7 @@ public class RobotControllerMap
 	private final int catapultRightRetractSolenoidSlot 	= 3;
 	private final int intakeExpandSolenoidSlot			= 4;
 	private final int intakeRetractSolenoidSlot 		= 5;
+	private final int gripperSolenoidSlot				= 6;
 
 	private Talon m_LeftDrive1;
 	private Talon m_LeftDrive2;
@@ -49,6 +50,7 @@ public class RobotControllerMap
 
 	private TalonSRX m_Elevator;
 	
+	private Solenoid m_Gripper;
 	private DoubleSolenoid m_CatapultLeft;
 	private DoubleSolenoid m_CatapultRight;
 	private DoubleSolenoid m_IntakeSolenoid;
@@ -81,6 +83,7 @@ public class RobotControllerMap
 		
 		m_Roller = new Talon(rollerPWM);
 		
+		m_Gripper = new Solenoid(gripperSolenoidSlot);
 		m_CatapultLeft = new DoubleSolenoid(catapultLeftExpandSolenoidSlot, catapultLeftRetractSolenoidSlot);
 		m_CatapultRight = new DoubleSolenoid(catapultRightExpandSolenoidSlot, catapultRightRetractSolenoidSlot);
 		m_IntakeSolenoid = new DoubleSolenoid(intakeExpandSolenoidSlot, intakeRetractSolenoidSlot);
@@ -107,6 +110,10 @@ public class RobotControllerMap
 		return m_Roller;
 	}
 	
+	public Solenoid getGripperSolenoid()
+	{
+		return m_Gripper;
+	}
 	public DoubleSolenoid getCatapultLeft() {
 		return m_CatapultLeft;
 	}

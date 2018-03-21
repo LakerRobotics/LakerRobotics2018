@@ -23,7 +23,7 @@ public class Elevator implements Subsystem {
 	private final double kd = 0.0;
 	
 	private double m_PositionTarget = 1;
-	private final double TOLERANCE = 200;
+	private double TOLERANCE = 200;
 	
 	
 	
@@ -51,8 +51,8 @@ public class Elevator implements Subsystem {
 			speed = 0;
 		}
 		
-		System.out.println("Limit High: " + m_LimitHigh.get());
-		System.out.println("Limit Low: " + m_LimitLow.get());
+		//System.out.println("Limit High: " + m_LimitHigh.get());
+		//System.out.println("Limit Low: " + m_LimitLow.get());
 		m_Talon.set(ControlMode.PercentOutput, speed);
 	}
 	public boolean getLimitHigh() {
@@ -85,7 +85,10 @@ public class Elevator implements Subsystem {
 	}
 	public boolean isPIDOnTarget()
 	{
-		return (Math.abs(getCurrentPosition()) >= (Math.abs(getPositionTarget() - TOLERANCE))); 
+		return (Math.abs(getPositionTarget()) - Math.abs(getCurrentPosition()) <= TOLERANCE); 
+	}
+	public void setTolerance(double tolerance) {
+		TOLERANCE = tolerance;
 	}
 	public double getCurrentPosition()
 	{
@@ -96,6 +99,7 @@ public class Elevator implements Subsystem {
 	{
 		SmartDashboard.putNumber("Elevator Target", getPositionTarget());
 		SmartDashboard.putNumber("Elevator Encoder Position", getCurrentPosition());
+		System.out.println("Elevator Encoder Position: " + getCurrentPosition());
 		SmartDashboard.putString("SRX State", m_Talon.getControlMode().toString());
 	}
 

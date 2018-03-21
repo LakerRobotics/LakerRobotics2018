@@ -7,7 +7,7 @@ import org.usfirst.frc.team5053.robot.Constants.RobotValuesLisa;
 public class RobotConstants 
 {
 	private static RobotValues robotWeAreRunningOn;
-	private static String robotName = "lilgeek"; // Robot name here
+	private static String robotName = "lisa"; // Robot name here
 	
 	static
 	{
