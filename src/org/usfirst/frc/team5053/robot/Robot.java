@@ -2,6 +2,8 @@ package org.usfirst.frc.team5053.robot;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
@@ -18,6 +20,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -79,6 +82,7 @@ public class Robot extends IterativeRobot
 	private LidarLite m_Lidar;
 	private Compressor m_Compressor;
 	private Talon m_Roller;
+	private Solenoid m_Gripper;
 	
 	//Vision declaration
 	
@@ -90,6 +94,11 @@ public class Robot extends IterativeRobot
 	private double rollerMotorDeadZone = 0.15;
 	private double speed_relative_to_intake_wheels =  3*(speedOfRollers/speedOfIntake); // RGT 20180303 looks like only 0.13 is not enough to gaurntee the wheels will turn, but add dead zone and 3 times that is
 	// private double speed_relative_to_intake_wheels = 0.25; // if the complexity above is not a good guess just start playing with this number
+
+	private boolean hasGripperButtonBeenReleased = true;
+	private boolean m_gripperState = false;
+	
+	
 	//Vision constants
 	
 	//Autonomous variables
@@ -118,7 +127,7 @@ public class Robot extends IterativeRobot
 	BTMacroPlay m_BTMacroPlay;
 	BTMacroPlay m_PlaybackScaleToSwitch;
 	
-	boolean isRecording = false;
+	boolean isRecording = true;// default so it is always recording during teleopp
 	//autoNumber defines an easy way to change the file you are recording to/playing from, in case you want to make a
 	//few different auto programs
 		static final int autoNumber = 1; // I guess if you like the recording then for now increment recompile so don't overwrite (obviously we can do better again this is just Proof of Concept)
@@ -149,6 +158,7 @@ public class Robot extends IterativeRobot
 	private boolean hasElevatorEncoderZeroed = false;
 	private final String m_robotName = RobotConstants.getRobotName();
 	
+	private final double kColin = 75.0; // One Colin is equal to 75 inches
 	@Override
     public void robotInit()
     {
@@ -169,7 +179,7 @@ public class Robot extends IterativeRobot
         	m_Intake = new Intake(m_RobotControllers.getLeftIntake(), m_RobotControllers.getRightIntake(), m_RobotControllers.getIntakeSolenoid());
         	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
         	m_Roller = m_RobotControllers.getRoller();
-        	
+        	m_Gripper = m_RobotControllers.getGripperSolenoid();
         	
         	
         	
@@ -197,7 +207,7 @@ public class Robot extends IterativeRobot
     
 	@Override
 	public void teleopInit(){
-		isRecording= false;
+		isRecording= true;// have it recording all the time
     	// Record Playback
     	try{
     		m_BTMacroRecord = new BTMacroRecord();
@@ -222,7 +232,7 @@ public class Robot extends IterativeRobot
     	
     	// Get information about which autonomous routine to run
     	// TODO Make sure this is defaulted to the correct value when put to production
-    	autonRoutine = SmartDashboard.getString("Auton Selection", "test");		// Start position of the robot from our side of the field
+    	autonRoutine = SmartDashboard.getString("Auton Selection", "left scale");		// Start position of the robot from our side of the field
     	secondPart = SmartDashboard.getBoolean("Second Step", false);			// Second part of auton routine
     	matchData = DriverStation.getInstance().getGameSpecificMessage(); 		// Field orientation
     	
@@ -325,11 +335,14 @@ public class Robot extends IterativeRobot
     	case "test":
     		//switchShotTest();
     		//swingTest();
-    		straightTest();
+    		//straightTest();
     		//controlledAngleTest();
-    		//turnTest();
+    		turnTest();
     		//switchCenter();
     		//worstCaseScenarioScaleLeftRightTest();
+    		break;
+    	case "turntest":
+    		turnTest();
     		break;
     	case "playback":
     		m_BTMacroPlay.play(m_RobotControllers);
@@ -390,7 +403,7 @@ public class Robot extends IterativeRobot
     	switch(autonomousCase)
     	{
     	case 0:
-    		m_DriveTrain.DriveDistance(120, 8, 20);
+    		m_DriveTrain.DriveDistance(60, 8, 20);
     		autonomousCase++;
     		break;
     	case 1:
@@ -538,9 +551,13 @@ public class Robot extends IterativeRobot
     // TODO Straight drive length?
     public void switchCenter()
     {
+    	
     	switch(autonomousCase)
     	{
     	case 0: // Swing to move toward the desired switch plate
+    		if (m_robotName == "lisa") {
+    			m_Elevator.setTolerance(2000);
+    		}
     		if(switchChar == 'L')
     		{
         		m_DriveTrain.SetSwingParameters(-30, false);
@@ -567,7 +584,7 @@ public class Robot extends IterativeRobot
     			
     			if (m_robotName == "lisa") {
     				m_ThePult.Arm();
-    				m_Elevator.setPosition(kHigh);
+    				
     			}
     			
         		autonomousCase++;
@@ -585,7 +602,9 @@ public class Robot extends IterativeRobot
     			{
     				m_DriveTrain.SetSwingParameters(0, false);
     			}
-    			m_Roller.set(.80);
+    			if (m_robotName == "lisa") {
+        			m_Roller.set(.80);
+    			}
     			m_DriveTrain.StartSwingTurn();
     			autonomousCase++;
     		}
@@ -594,22 +613,26 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.SwingAngleOnTarget())
     		{
     			m_DriveTrain.disableSwingPID();
-    			m_DriveTrain.arcadeDrive(.20, 0.0);
-
+    			m_DriveTrain.arcadeDrive(-.5, 0.0);
+    			m_Elevator.setPosition(kHigh);
     			autonomousWait = 0;
     			autonomousCase++;
     		}
     		break;
     	case 4: // Launch cube into switch with the short shot
+    		m_DriveTrain.arcadeDrive(-.5,  0.0);
     		if(autonomousWait >= 25)
     		{
     			
     			///TODO
+    			
     			if (m_robotName == "lisa") 
     			{
-    				m_ThePult.Launch();
-    				autonomousWait = 0;
-    				autonomousCase++;
+    				if (m_Elevator.isPIDOnTarget()) {
+    					m_ThePult.Launch();
+        				autonomousWait = 0;
+        				autonomousCase++;
+    				}    				
     			}
     			else
     			{
@@ -620,17 +643,21 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 5:
+    		m_DriveTrain.arcadeDrive(-.5,  0.0);
     		if(autonomousWait >= SWITCH_CATAPULT_DELAY)
     		{
-    			m_DriveTrain.arcadeDrive(0.0, 0.0);
-    			m_Roller.set(0.0);
+    			
+    			
+    			
     			if (m_robotName == "lisa") {
     				m_ThePult.Arm();
+    				m_Roller.set(0.0);
     			}
     			autonomousCase++;
     		}
     		break;
     	case 6:
+    		m_DriveTrain.arcadeDrive(0.0, 0.0);
     		break;
     	}
     }
@@ -641,7 +668,10 @@ public class Robot extends IterativeRobot
     	switch(autonomousCase)
     	{
     	case 0: // Path our routine
-    		m_ThePult.Arm();
+    		if (m_robotName == "lisa") {
+        		m_ThePult.Arm();
+        		m_Roller.set(.80);
+    		}
     		if(scaleChar == autonRoutine.toUpperCase().charAt(0))
     			
 				autonomousCase++; // ******Straight ahead
@@ -649,22 +679,24 @@ public class Robot extends IterativeRobot
 	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
-    			m_DriveTrain.DriveDistance(-(12*12/*Decision Point*/ + 60/*Decision point to scale*/), 6, 10);
+    			m_DriveTrain.DriveControlledAngle(-(13.5*12/*Decision Point*/ + 60/*Decision point to scale*/ + 72 /* extra distance because point turn*/), 10, 10, 0);
     			if (m_robotName == "lisa") 
     			{
-    				m_Elevator.setPosition(kHigh);
+    				//m_Elevator.setPosition(kHigh);
+    				m_Roller.set(.80);
     			}
     			autonomousCase = 8;
     		break;
     	case 2: // Drive to the decision point
-    		m_DriveTrain.DriveDistance(-12*12, 6, 10);
-    		if (m_robotName == "lisa") {
-    			m_Elevator.setPosition(kHigh);
-    		}
-    		//TOOD autonomousCase++;
-    		autonomousCase = 12;
+    		m_DriveTrain.DriveControlledAngle(-13*12, 10, 10, 0);
+    		
+    		autonomousCase++;
+    		//autonomousCase = 12;
     		break;
     	case 3: // Turn to cross the field
+    		if (m_robotName == "lisa") {
+    			m_Roller.set(.80);
+    		}
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
@@ -681,16 +713,19 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 4: // Cross the field
+    		if (m_robotName == "lisa") {
+    			m_Roller.set(.80);
+    		}
     		if(m_DriveTrain.SwingAngleOnTarget()) 
     		{
     			m_DriveTrain.disableSwingPID();
         		if(scaleChar == 'R')
         		{
-        			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, 90);
+        			m_DriveTrain.DriveControlledAngle(-8*12, 8, 10, 90);
         		}
         		else
         		{
-        			m_DriveTrain.DriveControlledAngle(-15*12, 8, 5, -90);
+        			m_DriveTrain.DriveControlledAngle(-8*12, 8, 10, -90);
         		}
     			autonomousCase++;
     		}
@@ -720,7 +755,7 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 7: // Drive up to scale from decision point or parallel decision point
-    		m_DriveTrain.DriveDistance(-24, 4, 4);
+    		m_DriveTrain.DriveControlledAngle(-24 + 84, 4, 4, 0);
     		autonomousCase++;
     		break;
     	case 8: // Turn to face scale
@@ -730,49 +765,314 @@ public class Robot extends IterativeRobot
     			
     			if(scaleChar == 'R')
     			{
-    				m_DriveTrain.SetSwingParameters(-90, false);
+    				m_DriveTrain.TurnToAngle(-90);
     			}
     			else
     			{
-    				m_DriveTrain.SetSwingParameters(90, true);
+    				m_DriveTrain.TurnToAngle(90);
     			}
-    			m_DriveTrain.StartSwingTurn();
+    			if (m_robotName == "lisa") {
+    				m_Roller.set(.80);
+        			m_Elevator.setPosition(kHigh);
+        		}
     			
     			autonomousCase++;
     		}
     		break;
-    	case 9: // Back up 3ft for shot
-    		if(m_DriveTrain.SwingAngleOnTarget())
+    	case 9: // Back up 1ft for shot
+    		if (m_robotName == "lisa") {
+    			m_Roller.set(.80);
+    		}
+    		if(m_DriveTrain.isTurnPIDFinished())
     		{
-        		m_DriveTrain.DriveDistance(36, 4, 4);
-        		// TODO
-        		autonomousCase = 12;
-        		//autonomousCase++;
+    			m_DriveTrain.DisablePIDControl();
+        		m_DriveTrain.DriveDistance(12, 4, 4);
+        		autonomousCase++;
     		}
     		break;
     	case 10: // Shoot powercube onto scale plate
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
+
+    			if (m_robotName == "lisa") {
+    				m_Roller.set(.80);
+    				autonomousCase++;
+    				
+    			} 
+    			else 
+    			{
+    				autonomousCase++;
+    				autonomousWait = 0;
+    			}
     			
-    			//TODO uncomment me!
-    			//m_ThePult.Launch();
-        		autonomousCase++;
+        		
     		}
     		break;
-    	case 11:// Go do the Switch
-    		//if(!m_PlaybackScaleToSwitch.isDone()){
-    		//	m_PlaybackScaleToSwitch.play(m_RobotControllers);
-    		//}
-    		//else{
-        		autonomousCase++;
-    		//}
+    	case 11: // Launch Cube
+			if (m_robotName == "lisa" /* && m_Elevator.isPIDOnTarget()*/) 
+			{
+				m_ThePult.Launch();
+				autonomousCase++;
+				autonomousWait = 0;
+			}
+			else
+			{
+				autonomousCase++;
+			}
     		break;
-    	case 12:
+    	case 12: // Move forward slightly
+    		if(autonomousWait >= 50)
+    		{
+    			m_DriveTrain.DriveDistance(-12, 6, 4);
+    			autonomousCase++;
+    		}
+    		break;
+    	case 13:// Go actually do the Switch
+    		if (m_DriveTrain.isStraightPIDFinished()) 
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			
+    			if(secondPart)
+        		{
+        			if (m_robotName == "lisa") 
+        			{
+        				m_Roller.set(0.0);
+        				m_Elevator.setPosition(kLow);
+        				m_Intake.ReleaseCube();
+        				m_Intake.expandIntake();
+        			}
+            		if (scaleChar == 'R') 
+            		{
+            			if (switchChar == 'R') 
+            			{
+            				m_DriveTrain.TurnToAngle(30);
+            			}
+            			else 
+            			{
+            				m_DriveTrain.TurnToAngle(60);
+            			}
+            		} 
+            		else 
+            		{
+            			if (switchChar == 'R') 
+            			{
+            				m_DriveTrain.TurnToAngle(-60);
+            			}
+            			
+            			else 
+            			{
+            				m_DriveTrain.TurnToAngle(-30);
+            			}
+            		}
+                	autonomousCase++;
+        		}
+    			else
+    			{
+    				autonomousCase = 19;
+    			}
+    		}    		
+    		break;   	
+    	case 14:
+    		
+    		if(m_DriveTrain.isTurnPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			if (m_robotName == "lisa") 
+    			{
+    				if (m_Elevator.isPIDOnTarget()) 
+    				{
+        				m_Roller.set(0.0);
+        				m_Intake.ReleaseCube();
+        				
+        				if (scaleChar == 'R') 
+        				{
+                			if (switchChar == 'R') 
+                			{
+                				m_DriveTrain.DriveControlledAngle(84, 8, 10, 30);
+                			} 
+                			else 
+                			{
+                				m_DriveTrain.DriveControlledAngle(120, 8, 10, 60);
+                			}
+                		} 
+        				else 
+        				{
+                			if (switchChar == 'R') 
+                			{
+                				m_DriveTrain.DriveControlledAngle(120, 8, 10, -60);
+                			} 
+                			else 
+                			{
+                				m_DriveTrain.DriveControlledAngle(84, 8, 10, -30);
+                			}
+                		}
+        				autonomousCase++;
+        			}
+    				
+    			} 
+    			else 
+    			{
+    				if (scaleChar == 'R') 
+    				{
+            			if (switchChar == 'R') 
+            			{
+            				m_DriveTrain.DriveDistance(60, 8, 15);
+            			} 
+            			else 
+            			{
+            				m_DriveTrain.DriveDistance(120, 8, 15);
+            			}
+            		} 
+    				else 
+            		{
+            			if (switchChar == 'R') 
+            			{
+            				m_DriveTrain.DriveDistance(120, 8, 15);
+            			} 
+            			else 
+            			{
+            				m_DriveTrain.DriveDistance(60, 8, 15);
+            			}
+            		}
+    				
+    				if(scaleChar == switchChar)
+    					autonomousCase++;
+    				else
+    					autonomousCase = 20;
+    			}	
+    		}
+    		break;
+    	case 15:
+    		if (m_robotName == "lisa") 
+    		{
+				m_Roller.set(0.0);
+				m_Intake.ReleaseCube();
+			}
+    		if (m_DriveTrain.isStraightPIDFinished())
+    		{
+    			m_DriveTrain.DisablePIDControl();
+    			if (scaleChar == 'R') 
+    			{
+        			m_DriveTrain.SetSwingParameters(0 , true);
+        		}
+    			else 
+    			{
+        			m_DriveTrain.SetSwingParameters(0 , false);
+        		}
+    			m_DriveTrain.StartSwingTurn();
+    			autonomousCase++;
+    		}
+    		break;
+    	case 16:
+    		if (m_robotName == "lisa") 
+    		{
+				m_Roller.set(0.0);
+				m_Intake.ReleaseCube();
+			}
+    		if (m_DriveTrain.SwingAngleOnTarget())
+    		{
+    			m_DriveTrain.disableSwingPID();
+    			
+    			if (m_robotName == "lisa") 
+    			{
+    				m_Intake.StopIntake();
+    				m_Intake.retractIntake();
+    				m_Elevator.setPosition(kHigh);
+    			}
+    			
+    			autonomousCase++;
+    		}
+    		break;
+    	case 17:
+    		
+    		if(m_robotName == "lisa")
+    		{
+    			if (m_Elevator.isPIDOnTarget())
+    			{
+	    			if (m_robotName == "lisa") 
+	    			{
+	    				m_Intake.IntakeCube();
+	    				
+	    			}
+	    			
+	    			m_DriveTrain.DriveControlledAngle(1*kColin, 2, 1, 0);
+	    			autonomousWait = 0;
+	    			autonomousCase++;
+    			}
+    		}
+    		else
+    		{
+    			m_DriveTrain.DriveControlledAngle(1*kColin, 2, 1, 0);
+    			autonomousWait = 0;
+    			autonomousCase++;
+    		}
+	    		
+    		break;
+    	case 18:
+    		
+    		//m_DriveTrain.DriveControlledAngle(1*kColin, 2, 1, 0);
+    		
+    		if (autonomousWait >= 50)
+    		{
+        		autonomousCase++;
+    			//m_DriveTrain.arcadeDrive(0.0, 0.0);
+    		} 
+    		else if (m_robotName == "lisa") 
+    		{
+				m_Intake.IntakeCube();
+			}
+    		break;
+    	case 19:
+    		//m_DriveTrain.arcadeDrive(0.0, 0.0);
+    		break;
+    		
+    		
+    		
+    	case 20: // Switch and scale sides don't match
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-    			m_DriveTrain.ArcadeDrive(0, 0);
+    			if (m_robotName == "lisa") 
+    			{
+    				if (m_Elevator.isPIDOnTarget()) 
+    				{
+        				m_Roller.set(0.0);
+        				m_Intake.ReleaseCube();
+        				m_DriveTrain.DriveDistance(-60, 8, 15);
+                			
+        				autonomousCase++;
+        			}
+    			} 
+    			else 
+    			{
+    				m_DriveTrain.DriveDistance(-60, 8, 15);
+    				
+    				autonomousCase++;
+    			}
+    		}
+    		break;
+    	case 21: // Return to scale position
+    		if(m_DriveTrain.isStraightPIDFinished())
+    		{
+    			if(scaleChar == 'R')
+    				m_DriveTrain.SetSwingParameters(-90, false);
+    			else
+    				m_DriveTrain.SetSwingParameters(90, true);
+    			
+    			m_DriveTrain.StartSwingTurn();
+    		}
+    		break;
+    	case 22:
+    		m_Elevator.setPosition(kHigh);
+    		m_ThePult.Arm();
+    		autonomousCase++;
+    		break;
+    	case 23:
+    		if(m_Elevator.isPIDOnTarget())
+    		{
+    			m_ThePult.Launch();
+        		autonomousCase++;
     		}
     		break;
     	}
@@ -1107,6 +1407,7 @@ public class Robot extends IterativeRobot
         	catapultControl();
         	//switchCatapultShot();
         	rollerControl();
+        	gripperControl();
     		elevatorControl();// elevator has to come last because transfer button will override other buttons, so specifically the intake and roller
     	}
     	
@@ -1117,6 +1418,7 @@ public class Robot extends IterativeRobot
     	//Misc variable updates
     	GetDashboardData();
     	WriteDashboardData();
+    	
     	
     }
     
@@ -1139,7 +1441,7 @@ public class Robot extends IterativeRobot
 			}
 			catch (Exception e) 
 			{
-				e.printStackTrace();
+				System.out.println("Robot.record4LaterPlayback() excepiton e="+e);	
 			}
 		}
 		
@@ -1174,7 +1476,8 @@ public void disabledInit(){
     {
     	// Unfortunately both drive motor groups must be inverted in order for the encoders to properly read (On Lil' Geek) which is why the inputs are inverted here
     	
-    	
+    	m_DriveTrain.DisablePIDControl();
+    	m_DriveTrain.disableSwingPID();
     	if(m_RobotInterface.GetDriverLeftTrigger() && !m_RobotInterface.GetDriverLeftBumper())
     	{
     	 	m_driveSpeed = 0.7;
@@ -1365,6 +1668,19 @@ public void disabledInit(){
     		m_Roller.set(0.0);
     	}
     }
+    public void gripperControl()
+    {
+    	if(m_RobotInterface.GetDriverA() && hasGripperButtonBeenReleased)
+    	{
+    		m_gripperState = !m_gripperState;
+    		m_Gripper.set(m_gripperState);
+    		hasGripperButtonBeenReleased = false;
+    	}
+    	else if(!m_RobotInterface.GetDriverA() && !hasGripperButtonBeenReleased)
+    	{
+    		hasGripperButtonBeenReleased = true;
+    	}
+    }
     
     public void switchCatapultShot()
     {
@@ -1458,5 +1774,73 @@ public void disabledInit(){
 		return intToReturn;
 	}
 	
+	// Test the CatapultTimeLimited, timing accuracy
+	Instant lastThrow = Instant.now();
+	int cycleBufferMilli = 100;//Time to wait between cycles
+	int cycleCurrentLength = 20; 
+	int cycleStartIncrement = 5;
+	int cyclesToRun = 50;
+	int cycleOnNow = 0;
+	boolean timeTestingError = false;
+	
+	public void testTimingCatapultTimeLimited() {
+		if (m_robotName != "lisa") {
+			if(timeTestingError==false) {
+				try {
+					//if(m_ThePult==null) {
+					//	m_ThePult = new Catapult(m_RobotControllers.getCatapultLeft(), m_RobotControllers.getCatapultRight());
+					//}
+					Instant now = Instant.now();
+					if (       now.toEpochMilli()-lastThrow.toEpochMilli()
+							> cycleCurrentLength+cycleBufferMilli ) {
+						double secondsTillReverse = (double)cycleCurrentLength/(double)1000;
+
+
+						long milliSecondsTillReverse = (long) (secondsTillReverse*1000);
+						int nanoSecondTillReverse = (int) (secondsTillReverse*1000*1000000 - milliSecondsTillReverse*1000000);
+						
+						// called and will print in the Log, and then pull from that log and can see how consistent it is in hitting the requested firing time.
+					    Thread t = new Thread(() -> {
+					    	try {
+					     		Instant start = Instant.now();
+								long nanoStart = System.nanoTime();
+					     		Thread.sleep(milliSecondsTillReverse, nanoSecondTillReverse);
+								long nanoEnd = System.nanoTime();
+					     		Instant end = Instant.now();
+					     		
+//					     		double howLongActualFired = (end.getNano()-start.getNano())/1000;
+//					     		double howLongActualFired = (end.getLong(ChronoField.MICRO_OF_SECOND)-start.getLong(ChronoField.MICRO_OF_SECOND));
+					     		double howLongActualFired = (end.toEpochMilli()-start.toEpochMilli());
+					     		double howLongActualFiredNano = (nanoEnd-nanoStart);
+
+					     		System.out.println("Robot.testTimingCataputlTimeLimited thread: Wanted "+secondsTillReverse*1000+" milli-seconds; actually wait was "
+//					     		+howLongActualFired+ " micro-seconds("+end.getNano()+"-"+start.getNano()+").  Error was " +(howLongActualFired -secondsTillReverse*1000000)+ " micro-seconds.");
+//					     		+howLongActualFired+ " micro-seconds("+end.getLong(ChronoField.MICRO_OF_SECOND)+"-"+start.getLong(ChronoField.MICRO_OF_SECOND)+").  Error was " +(howLongActualFired -secondsTillReverse*1000000)+ " micro-seconds.");
+//					     		+howLongActualFired+ " milli-seconds("+end.toEpochMilli()+"-"+start.toEpochMilli()+").  Error was " +(howLongActualFired -secondsTillReverse*1000)+ " milli-seconds.");
+//					     		+(double)howLongActualFiredNano/1000000+ " milli-seconds("+(double) nanoEnd/1000000+"-"+(double)nanoStart/1000000+").  Error was " +((double)howLongActualFiredNano/1000000 -(double)(secondsTillReverse*1000))+ " milli-seconds.");
+					     		+(double)howLongActualFiredNano/1000000+ " milli-seconds.  Error was " +((double)howLongActualFiredNano/1000000 -(double)(secondsTillReverse*1000))+ " milli-seconds.");
+					     	} catch (InterruptedException e) {
+					     		e.printStackTrace();
+					     	}
+					    });
+					        
+					    // start the thread that will run the above code totally independently of the normal robot thread
+					    t.start();
+					        
+						//m_ThePult.LauchTimeLimited((double)cycleCurrentLength/(double)1000);
+						cycleOnNow++;
+						if(cycleOnNow>cyclesToRun) {
+							cycleCurrentLength=cycleCurrentLength+cycleStartIncrement;
+							cycleOnNow=0;
+						}
+					}
+				}
+				catch(Exception e) {
+					System.out.println("testTimingCatapultTimeLimited testing stopping becuase exception "+e);
+					timeTestingError=true;// stop test
+				}
+			}
+		}
+	}
     
 }

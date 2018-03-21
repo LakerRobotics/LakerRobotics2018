@@ -68,11 +68,12 @@ public class BTMacroPlay {
 	public void play(RobotControllerMap theRobotControllerMap)
 	{
 		if(debug) {
-			System.out.print("BTMacroRecord.play() entered");
+			System.out.print("BTMacroPlay.play() entered");
 		}
 		
 		//if recordedAuto.csv has a double to read next, then read it
-		if ((scanner != null) && (scanner.hasNextDouble()))
+		if ((scanner != null)  ) {
+		if ( scanner.hasNext())
 		{
 			double t_delta;
 			
@@ -106,11 +107,14 @@ public class BTMacroPlay {
 				onTime = false;
 			}
 		}
+		}
 		//end play, there are no more values to find
 		else
 		{
 			if(debug) {
-				System.out.print("in BTMacroRecord.play() no more values in the playback file "+getPlaybackFileName());
+				System.out.print("in BTMacroPlay.play() scanner = "+scanner+" no more values in the playback file "+getPlaybackFileName());
+				// null out the scanner
+				scanner = null;
 			}
 			done = true;
 

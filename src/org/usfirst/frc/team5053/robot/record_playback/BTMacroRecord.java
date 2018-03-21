@@ -35,7 +35,7 @@ public class BTMacroRecord {
 	//this object writes values into the file we specify
 	FileWriter writer = null;
 	
-	boolean debug = true;
+	boolean debug = false;
 	
 	long startTime;
 	
@@ -48,7 +48,7 @@ public class BTMacroRecord {
 			{
 				//put the filesystem location you are supposed to write to as a string 
 				//as the argument in this method, as of 2015 it is /home/lvuser/recordedAuto.csv
-				System.out.println("BTMacroRecord.BTMacroRecord() constructor about to create a new writter created for file "+(Robot.autoFile+Robot.getMaxRecorderFileNumber()+1)+".csv ");
+				System.out.println("BTMacroRecord.BTMacroRecord() constructor about to create a new writter created for file "+(Robot.autoFile+(Robot.getMaxRecorderFileNumber()+1))+".csv ");
 				writer = new FileWriter(Robot.autoFile+Robot.getNextRecorderFileNumber()+".csv");
 			}
 			catch(Exception e) {
@@ -60,7 +60,7 @@ public class BTMacroRecord {
 	public void record(RobotControllerMap theRobotControllerMap) throws IOException
 	{
 		if(writer == null) {
-			System.out.print("in BTMacroRecord.record() but writer is null, so exiting without doing anything");
+			System.out.println("in BTMacroRecord.record() but writer is null, so exiting without doing anything");
 		}
 		else // writer is available so 
 		{
@@ -82,8 +82,6 @@ public class BTMacroRecord {
 				//intake motors
 				+"," + theRobotControllerMap.getLeftIntake().get()
 				+"," + theRobotControllerMap.getRightIntake().get()
-				//Elevator motor
-				+"," + theRobotControllerMap.getElevator().getMotorOutputPercent()
 				+ "\n"
 			);
 		}
@@ -100,8 +98,6 @@ public class BTMacroRecord {
 		writer.append("," + theRobotControllerMap.getLeftIntake().get());
 		writer.append("," + theRobotControllerMap.getRightIntake().get());
 
-		//Elevator motor
-		writer.append("," + theRobotControllerMap.getElevator().getMotorOutputPercent());
 		/*
 		 * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO 
 		 * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
