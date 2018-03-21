@@ -679,7 +679,7 @@ public class Robot extends IterativeRobot
 	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
-    			m_DriveTrain.DriveDistance(-(13.5*12/*Decision Point*/ + 60/*Decision point to scale*/ + 72 /* extra distance because point turn*/), 10, 10);
+    			m_DriveTrain.DriveControlledAngle(-(13.5*12/*Decision Point*/ + 60/*Decision point to scale*/ + 72 /* extra distance because point turn*/), 10, 10, 0);
     			if (m_robotName == "lisa") 
     			{
     				//m_Elevator.setPosition(kHigh);
@@ -688,7 +688,7 @@ public class Robot extends IterativeRobot
     			autonomousCase = 8;
     		break;
     	case 2: // Drive to the decision point
-    		m_DriveTrain.DriveDistance(-13*12, 10, 10);
+    		m_DriveTrain.DriveControlledAngle(-13*12, 10, 10, 0);
     		
     		autonomousCase++;
     		//autonomousCase = 12;
@@ -755,7 +755,7 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 7: // Drive up to scale from decision point or parallel decision point
-    		m_DriveTrain.DriveDistance(-24 + 84, 4, 4);
+    		m_DriveTrain.DriveControlledAngle(-24 + 84, 4, 4, 0);
     		autonomousCase++;
     		break;
     	case 8: // Turn to face scale
@@ -889,22 +889,22 @@ public class Robot extends IterativeRobot
         				{
                 			if (switchChar == 'R') 
                 			{
-                				m_DriveTrain.DriveDistance(84, 8, 10);
+                				m_DriveTrain.DriveControlledAngle(84, 8, 10, 30);
                 			} 
                 			else 
                 			{
-                				m_DriveTrain.DriveDistance(120, 8, 10);
+                				m_DriveTrain.DriveControlledAngle(120, 8, 10, 60);
                 			}
                 		} 
         				else 
         				{
                 			if (switchChar == 'R') 
                 			{
-                				m_DriveTrain.DriveDistance(120, 8, 10);
+                				m_DriveTrain.DriveControlledAngle(120, 8, 10, -60);
                 			} 
                 			else 
                 			{
-                				m_DriveTrain.DriveDistance(84, 8, 10);
+                				m_DriveTrain.DriveControlledAngle(84, 8, 10, -30);
                 			}
                 		}
         				autonomousCase++;
