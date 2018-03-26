@@ -23,7 +23,7 @@ public class Elevator implements Subsystem {
 	private final double kd = 0.0;
 	
 	private double m_PositionTarget = 1;
-	private double TOLERANCE = 200;
+	private double TOLERANCE = 2000;
 	
 	
 	
