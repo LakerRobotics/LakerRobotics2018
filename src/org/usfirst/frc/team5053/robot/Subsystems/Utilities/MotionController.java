@@ -240,7 +240,9 @@ public class MotionController
 		 * */
 		if (Math.abs(m_DriveTrain.GetAngle()-m_targetAngle) < m_TurnTolerance && Math.abs(m_DriveTrain.getAngularVelocity()) < m_AngularVelocityTolerance)
 		{
-			m_TurnPIDController.disable();
+			if(m_TurnPIDController != null)
+				m_TurnPIDController.disable();
+			
 			m_DriveTrain.ArcadeDrive(0, 0);
 			m_PIDEnabled = false;
 			return true;
