@@ -698,15 +698,15 @@ public class Robot extends IterativeRobot
         		m_Elevator.setTolerance(2000);
         		
     		}
-    		autonomousCase = 13;
+    		//autonomousCase = 13;
     		
     		//TODO Uncomment me :3c
-    		/*
+    		
     		if(scaleChar == autonRoutine.toUpperCase().charAt(0))
     			
 				autonomousCase++; // ******Straight ahead
 			else
-	    		autonomousCase = 2;// Cross the field*/
+	    		autonomousCase = 2;// Cross the field
     		break;
     	case 1: // ******Drive directly to the scale as we started on the same side as the scale
     			m_DriveTrain.DriveControlledAngle(-(13.5*12/*Decision Point*/ + 60/*Decision point to scale*/ + 60 /* extra distance because point turn*/), 10, 10, 0);
@@ -743,7 +743,7 @@ public class Robot extends IterativeRobot
     		if(m_DriveTrain.isStraightPIDFinished())
     		{
     			m_DriveTrain.DisablePIDControl();
-        		/*if(scaleChar == 'R')
+        		if(scaleChar == 'R')
         		{
         			m_DriveTrain.SetSwingParameters(90, true);
         		}
@@ -752,7 +752,7 @@ public class Robot extends IterativeRobot
         			m_DriveTrain.SetSwingParameters(-90, false);
         		}
         		m_DriveTrain.StartSwingTurn();
-        		autonomousCase++;*/
+        		autonomousCase++;
     		}
     		break;
     	case 4: // Cross the field
@@ -765,11 +765,11 @@ public class Robot extends IterativeRobot
     			m_DriveTrain.disableSwingPID();
         		if(scaleChar == 'R')
         		{
-        			m_DriveTrain.DriveControlledAngle(-8*12, 8, 10, 90);
+        			m_DriveTrain.DriveControlledAngle(-13*12, 8, 10, 90);
         		}
         		else
         		{
-        			m_DriveTrain.DriveControlledAngle(-8*12, 8, 10, -90);
+        			m_DriveTrain.DriveControlledAngle(-13*12, 8, 10, -90);
         		}
     			autonomousCase++;
     		}
@@ -799,7 +799,7 @@ public class Robot extends IterativeRobot
     		}
     		break;
     	case 7: // Drive up to scale from decision point or parallel decision point
-    		m_DriveTrain.DriveControlledAngle(-24 + 84, 4, 4, 0);
+    		m_DriveTrain.DriveControlledAngle(-48, 4, 4, 0);
     		autonomousCase++;
     		break;
     	case 8: // Turn to face scale
@@ -884,13 +884,13 @@ public class Robot extends IterativeRobot
     		{	
     			if(m_robotName == "lisa")
     				m_ThePult.Arm();
-    			m_DriveTrain.DriveDistance(-12, 6, 4);
+    			m_DriveTrain.DriveControlledAngle(-12, 6, 4, 0);
     			autonomousCase++;
     		}
     		break;
     	case 13:// Go actually do the Switch
-    		//if (m_DriveTrain.isStraightPIDFinished()) 
-    		//{
+    		if (m_DriveTrain.isStraightPIDFinished()) 
+    		{
     			//m_DriveTrain.DisablePIDControl();
     			
     			if (m_robotName == "lisa") 
@@ -910,7 +910,7 @@ public class Robot extends IterativeRobot
         			
         		}
             	autonomousCase++;
-    		//}    		
+    		}    		
     		break;   	
     	case 14:
     		
